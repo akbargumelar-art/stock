@@ -393,6 +393,10 @@ select.input {
 }
 
 /* Print styles for QR labels */
+.print-area {
+  display: none;
+}
+
 @media print {
   body * {
     visibility: hidden;
@@ -404,6 +408,7 @@ select.input {
   }
 
   .print-area {
+    display: block !important;
     position: fixed;
     left: 0;
     top: 0;
