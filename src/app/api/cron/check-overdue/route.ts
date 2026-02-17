@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { sendWA, buildLoanReminderMessage } from "@/lib/wa-utils";
 import { NextRequest, NextResponse } from "next/server";
 
+// Force dynamic rendering - don't execute during build
+export const dynamic = "force-dynamic";
+
 const CRON_SECRET = process.env.CRON_SECRET || "stockflow-cron-key";
 
 export async function GET(request: NextRequest) {
