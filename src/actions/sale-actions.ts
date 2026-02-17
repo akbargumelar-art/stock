@@ -73,7 +73,7 @@ export async function getSaleDetail(id: string) {
         include: {
             items: {
                 include: {
-                    product: { select: { sku: true, name: true, unit: true } },
+                    product: { select: { sku: true, name: true, unit: true, costPrice: true } },
                 },
             },
         },
@@ -129,6 +129,8 @@ export async function createSale(data: {
         });
 
         for (const item of data.items) {
+            const product = productMap.get(item.productId)!;
+
             // Create sale item
             await tx.saleItem.create({
                 data: {
@@ -136,6 +138,7 @@ export async function createSale(data: {
                     productId: item.productId,
                     qty: item.qty,
                     sellingPrice: item.sellingPrice,
+                    costPrice: product.costPrice,
                 },
             });
 
@@ -231,6 +234,7 @@ export async function getProductsForSale(search?: string) {
             sku: true,
             name: true,
             price: true,
+            costPrice: true,
             currentStock: true,
             unit: true,
         },

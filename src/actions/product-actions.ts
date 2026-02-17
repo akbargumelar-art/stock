@@ -98,6 +98,7 @@ export async function createProduct(data: {
     description?: string;
     unit: string;
     price?: number;
+    costPrice?: number;
     minStock: number;
     currentStock: number;
     image?: string;
@@ -116,6 +117,7 @@ export async function createProduct(data: {
     const product = await prisma.product.create({
         data: {
             ...data,
+            costPrice: data.costPrice || 0,
             qrCode,
             createdBy: session.user.id,
         },
@@ -143,6 +145,7 @@ export async function updateProduct(
         description?: string;
         unit?: string;
         price?: number;
+        costPrice?: number;
         minStock?: number;
         currentStock?: number;
         image?: string;

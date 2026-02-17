@@ -40,10 +40,11 @@ interface ProductWithCategory {
     description: string | null;
     unit: string;
     price: number;
+    costPrice: number;
     minStock: number;
     currentStock: number;
     qrCode: string | null;
-    image: string | null; // Added
+    image: string | null;
     category: {
         id: number;
         name: string;
@@ -69,8 +70,9 @@ export default function ProductsPage() {
         name: "",
         categoryId: 0,
         description: "",
-        unit: "",
+        unit: "pcs",
         price: 0,
+        costPrice: 0,
         minStock: 5,
         currentStock: 0,
         image: "",
@@ -151,6 +153,7 @@ export default function ProductsPage() {
             description: product.description || "",
             unit: product.unit,
             price: product.price,
+            costPrice: product.costPrice,
             minStock: product.minStock,
             currentStock: product.currentStock,
             image: product.image || "",
@@ -166,11 +169,41 @@ export default function ProductsPage() {
             description: "",
             unit: "pcs",
             price: 0,
+            costPrice: 0,
             minStock: 5,
             currentStock: 0,
             image: "",
         });
         setIsAutoSKU(true);
+    };
+
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.url) {
+                setForm(prev => ({ ...prev, image: data.url }));
+            } else {
+                alert("Upload failed");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Upload failed");
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handlePrint = (product: ProductWithCategory) => {
@@ -507,15 +540,26 @@ export default function ProductsPage() {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {/* Image Preview */}
                             <div className="flex justify-center mb-4">
-                                <div className="w-24 h-24 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden relative group">
-                                    {form.image ? (
-                                        <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="text-center p-2">
-                                            <ImageIcon size={24} className="mx-auto text-[var(--text-muted)] mb-1" />
-                                            <span className="text-[10px] text-[var(--text-muted)]">No Image</span>
-                                        </div>
-                                    )}
+                                <div className="relative group">
+                                    <div className="w-24 h-24 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
+                                        {form.image ? (
+                                            <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="text-center p-2">
+                                                <ImageIcon size={24} className="mx-auto text-[var(--text-muted)] mb-1" />
+                                                <span className="text-[10px] text-[var(--text-muted)]">No Image</span>
+                                            </div>
+                                        )}
+                                        {uploading && (
+                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <label className="absolute bottom-0 right-0 p-1.5 bg-[var(--accent)] text-white rounded-full cursor-pointer shadow-lg hover:bg-[var(--accent)]/90 transition-colors transform translate-x-1/4 translate-y-1/4">
+                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                                        <Plus size={14} />
+                                    </label>
                                 </div>
                             </div>
 
@@ -605,20 +649,45 @@ export default function ProductsPage() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Price (Rp)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={form.price}
-                                    onChange={(e) =>
-                                        setForm({ ...form, price: Number(e.target.value) })
-                                    }
-                                    className="input font-mono"
-                                    min={0}
-                                    placeholder="0"
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Cost Price
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm">
+                                            Rp
+                                        </span>
+                                        <input
+                                            type="number"
+                                            value={form.costPrice}
+                                            onChange={(e) =>
+                                                setForm({ ...form, costPrice: Number(e.target.value) })
+                                            }
+                                            className="input pl-9 w-full"
+                                            min="0"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Selling Price
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm">
+                                            Rp
+                                        </span>
+                                        <input
+                                            type="number"
+                                            value={form.price}
+                                            onChange={(e) =>
+                                                setForm({ ...form, price: Number(e.target.value) })
+                                            }
+                                            className="input pl-9 w-full"
+                                            min="0"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

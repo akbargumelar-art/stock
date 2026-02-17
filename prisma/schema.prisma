@@ -81,6 +81,7 @@ model Product {
   description  String?  @db.Text
   unit         String   @default("pcs") @db.VarChar(50)
   price        Int      @default(0)
+  costPrice    Int      @default(0) @map("cost_price")
   image        String?  @db.Text
   minStock     Int      @default(0) @map("min_stock")
   currentStock Int      @default(0) @map("current_stock")
@@ -187,6 +188,7 @@ model SaleItem {
   productId    Int    @map("product_id")
   qty          Int
   sellingPrice Int    @map("selling_price")
+  costPrice    Int    @default(0) @map("cost_price")
 
   sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])

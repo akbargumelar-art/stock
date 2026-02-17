@@ -20,6 +20,9 @@ else
     npm install
 fi
 
+# Ensure upload directory exists
+mkdir -p public/uploads
+
 # 3. Update Database Schema
 echo "🗄️  Updating database schema..."
 npx prisma db push

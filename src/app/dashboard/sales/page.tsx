@@ -25,6 +25,7 @@ interface ProductOption {
     sku: string;
     name: string;
     price: number;
+    costPrice: number;
     currentStock: number;
     unit: string;
 }
@@ -63,6 +64,7 @@ interface SaleDetailRecord {
         id: number;
         qty: number;
         sellingPrice: number;
+        costPrice: number;
         product: { sku: string; name: string; unit: string };
     }[];
 }
@@ -255,8 +257,8 @@ export default function SalesPage() {
                     <button
                         onClick={() => setActiveTab("pos")}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "pos"
-                                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                            ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                             }`}
                     >
                         <ShoppingCart size={16} />
@@ -266,8 +268,8 @@ export default function SalesPage() {
                 <button
                     onClick={() => setActiveTab("history")}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "history"
-                            ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                        ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                         }`}
                 >
                     <Receipt size={16} />
@@ -345,8 +347,11 @@ export default function SalesPage() {
                                                                 {p.sku} · Stock: {p.currentStock} {p.unit}
                                                             </p>
                                                         </div>
-                                                        <span className="text-sm font-mono text-[var(--text-secondary)]">
-                                                            {formatRp(p.price)}
+                                                        <span className="text-sm font-mono text-[var(--text-secondary)] block text-right">
+                                                            Sell: {formatRp(p.price)}
+                                                        </span>
+                                                        <span className="text-xs font-mono text-[var(--text-muted)] block text-right">
+                                                            Buy: {formatRp(p.costPrice)}
                                                         </span>
                                                     </button>
                                                 ))}
@@ -646,7 +651,7 @@ export default function SalesPage() {
                                     <tr>
                                         <th>Product</th>
                                         <th className="text-center">Qty</th>
-                                        <th className="text-right">Price</th>
+                                        <th className="text-right">Price (Buy/Sell)</th>
                                         <th className="text-right">Subtotal</th>
                                     </tr>
                                 </thead>
@@ -663,7 +668,12 @@ export default function SalesPage() {
                                                 {item.qty} {item.product.unit}
                                             </td>
                                             <td className="text-right font-mono text-sm">
-                                                {formatRp(item.sellingPrice)}
+                                                <div className="flex flex-col">
+                                                    <span>{formatRp(item.sellingPrice)}</span>
+                                                    <span className="text-[10px] text-[var(--text-muted)]">
+                                                        ({formatRp(item.costPrice)})
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td className="text-right font-mono text-sm font-medium">
                                                 {formatRp(item.qty * item.sellingPrice)}
