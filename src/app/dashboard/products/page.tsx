@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import toast, { Toaster } from "react-hot-toast";
 import {
     getProducts,
     createProduct,
@@ -112,8 +113,10 @@ export default function ProductsPage() {
         try {
             if (editProduct) {
                 await updateProduct(editProduct.id, form);
+                toast.success("Product updated successfully!");
             } else {
                 await createProduct(form);
+                toast.success("Product created successfully!");
             }
             setShowModal(false);
             setEditProduct(null);
@@ -121,7 +124,7 @@ export default function ProductsPage() {
             fetchData();
         } catch (error) {
             console.error(error);
-            alert("Failed to save product");
+            toast.error("Failed to save product. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -131,9 +134,11 @@ export default function ProductsPage() {
         if (!confirm("Are you sure you want to delete this product?")) return;
         try {
             await deleteProduct(id);
+            toast.success("Product deleted successfully!");
             fetchData();
         } catch (error) {
             console.error(error);
+            toast.error("Failed to delete product. Please try again.");
         }
     };
 
@@ -141,12 +146,14 @@ export default function ProductsPage() {
         e.preventDefault();
         try {
             await createCategory(categoryForm);
+            toast.success("Category created successfully!");
             setCategoryForm({ name: "", description: "" });
             setShowCategoryModal(false);
             const cats = await getCategories();
             setCategories(cats as Category[]);
         } catch (error) {
             console.error(error);
+            toast.error("Failed to create category. Please try again.");
         }
     };
 
@@ -205,6 +212,7 @@ export default function ProductsPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            <Toaster position="top-right" />
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[var(--text-primary)]">Products</h1>

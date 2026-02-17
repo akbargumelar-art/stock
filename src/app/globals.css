@@ -321,6 +321,8 @@ select.input {
   justify-content: center;
   z-index: 50;
   padding: 1rem;
+  overflow-y: auto;
+  /* Allow overlay scrolling if needed */
 }
 
 .modal-content {
@@ -330,7 +332,10 @@ select.input {
   width: 100%;
   max-width: 32rem;
   max-height: 90vh;
-  overflow-y: auto;
+  margin: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* QR Code Display (non-print) */
@@ -355,13 +360,33 @@ select.input {
 /* Mobile Modal Fix */
 @media (max-width: 640px) {
   .modal-overlay {
-    align-items: flex-start;
-    padding: 0.5rem;
+    align-items: center;
+    padding: 1rem;
   }
 
   .modal-content {
-    margin-top: 1rem;
-    max-height: calc(100vh - 2rem);
+    margin: auto;
+    width: 100%;
+    max-height: 85dvh;
+    /* Safer dynamic height */
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Landscape mobile fix */
+@media (max-height: 600px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding-top: 1rem;
+    overflow-y: auto;
+  }
+
+  .modal-content {
+    margin: 0 auto 1rem auto;
+    max-height: none;
+    height: auto;
   }
 }
 
