@@ -17,7 +17,7 @@ cd /var/www/stock
 # 2. Pull latest code
 git pull origin master
 
-# 3. Install dependencies (IMPORTANT if new packages added)
+# 3. Install dependencies (IMPORTANT: Prisma downgraded to v5.22.0)
 npm install
 
 # 4. Database Migration (IMPORTANT if schema changes)

@@ -18,6 +18,7 @@ import clsx from "clsx";
 const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/products", label: "Products", icon: Package },
+    { href: "/dashboard/categories", label: "Categories", icon: Box },
     { href: "/dashboard/movements", label: "Movements", icon: ArrowRightLeft },
     { href: "/dashboard/loans", label: "Loans", icon: HandCoins },
     { href: "/dashboard/sales", label: "Sales", icon: ShoppingCart },
