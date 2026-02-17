@@ -193,7 +193,11 @@ export default function ProductsPage() {
     };
 
     const toggleQRCode = (productId: number) => {
-        setShowQRCode(prev => prev === productId ? null : productId);
+        if (showQRCode === productId) {
+            setShowQRCode(null);
+        } else {
+            setShowQRCode(productId);
+        }
     };
 
     const handleCategoryChange = async (categoryId: number) => {
@@ -396,13 +400,16 @@ export default function ProductsPage() {
                                                             <Trash2 size={14} />
                                                         </button>
                                                     </div>
-                                                    {/* QR Code Display */}
+                                                    {/* QR Code Display Overlay */}
                                                     {showQRCode === product.id && product.qrCode && (
-                                                        <div className="qr-display mt-2">
-                                                            <img src={product.qrCode} alt={`QR: ${product.sku}`} />
-                                                            <div className="text-xs text-center mt-1 font-mono">
-                                                                {product.sku}
+                                                        <div className="absolute right-12 top-0 z-10 bg-white p-2 border rounded shadow-lg animate-in fade-in zoom-in duration-200">
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="text-[10px] text-gray-500 font-mono">{product.sku}</span>
+                                                                <button onClick={() => setShowQRCode(null)} className="text-gray-400 hover:text-gray-600">
+                                                                    <X size={12} />
+                                                                </button>
                                                             </div>
+                                                            <img src={product.qrCode} alt={`QR: ${product.sku}`} className="w-24 h-24 object-contain" />
                                                         </div>
                                                     )}
                                                 </td>
