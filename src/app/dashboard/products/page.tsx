@@ -28,7 +28,8 @@ import {
     Sparkles,
     Box,
     ImageIcon,
-    Package
+    Package,
+    Camera,
 } from "lucide-react";
 
 // Update interface to include image
@@ -557,8 +558,12 @@ export default function ProductsPage() {
                                         )}
                                     </div>
                                     <label className="absolute bottom-0 right-0 p-1.5 bg-[var(--accent)] text-white rounded-full cursor-pointer shadow-lg hover:bg-[var(--accent)]/90 transition-colors transform translate-x-1/4 translate-y-1/4">
+                                        <input type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileUpload} />
+                                        <Camera size={14} />
+                                    </label>
+                                    <label className="absolute bottom-0 left-0 p-1.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full cursor-pointer shadow-lg hover:bg-[var(--border-color)] transition-colors transform -translate-x-1/4 translate-y-1/4 border border-[var(--border-color)]">
                                         <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
-                                        <Plus size={14} />
+                                        <ImageIcon size={14} />
                                     </label>
                                 </div>
                             </div>
