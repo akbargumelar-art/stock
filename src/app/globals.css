@@ -199,6 +199,24 @@ body {
     white-space: nowrap;
   }
 
+  .badge-success {
+    background-color: #10b981;
+    color: white;
+    border-color: #10b981;
+  }
+
+  .badge-warning {
+    background-color: #f59e0b;
+    color: white;
+    border-color: #f59e0b;
+  }
+
+  .badge-error {
+    background-color: #ef4444;
+    color: white;
+    border-color: #ef4444;
+  }
+
   /* QR Code Display (non-print) */
   .qr-display {
     display: flex;
