@@ -209,7 +209,12 @@ export async function deleteProduct(id: number) {
 export async function getCategories() {
     if (MOCK_ENABLED) return mockCategories;
 
-    return prisma.category.findMany({ orderBy: { name: "asc" } });
+    return prisma.category.findMany({
+        orderBy: { name: "asc" },
+        include: {
+            parent: { select: { id: true, name: true } },
+        },
+    });
 }
 
 export async function createCategory(data: { name: string; description?: string }) {

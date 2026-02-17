@@ -57,7 +57,7 @@ export default function ProductsPage() {
     const isAdmin = session?.user?.role === "ADMIN";
 
     const [products, setProducts] = useState<ProductWithCategory[]>([]);
-    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+    const [categories, setCategories] = useState<{ id: number; name: string; parentId?: number | null; parent?: { id: number; name: string } | null }[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [filterCategory, setFilterCategory] = useState("all");
@@ -332,11 +332,20 @@ export default function ProductsPage() {
                         className="input w-full"
                     >
                         <option value="all">All Categories</option>
-                        {categories.map((c) => (
-                            <option key={c.id} value={c.id.toString()}>
-                                {c.name}
-                            </option>
-                        ))}
+                        {categories.filter(c => !c.parentId).map((parent) => {
+                            const children = categories.filter(c => c.parentId === parent.id);
+                            if (children.length > 0) {
+                                return (
+                                    <optgroup key={parent.id} label={parent.name}>
+                                        <option value={parent.id.toString()}>{parent.name} (All)</option>
+                                        {children.map(child => (
+                                            <option key={child.id} value={child.id.toString()}>{child.name}</option>
+                                        ))}
+                                    </optgroup>
+                                );
+                            }
+                            return <option key={parent.id} value={parent.id.toString()}>{parent.name}</option>;
+                        })}
                     </select>
                 </div>
                 <div>
@@ -631,11 +640,20 @@ export default function ProductsPage() {
                                     <option value={0} disabled>
                                         Select category
                                     </option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
+                                    {categories.filter(c => !c.parentId).map((parent) => {
+                                        const children = categories.filter(c => c.parentId === parent.id);
+                                        if (children.length > 0) {
+                                            return (
+                                                <optgroup key={parent.id} label={parent.name}>
+                                                    <option value={parent.id}>{parent.name}</option>
+                                                    {children.map(child => (
+                                                        <option key={child.id} value={child.id}>{child.name}</option>
+                                                    ))}
+                                                </optgroup>
+                                            );
+                                        }
+                                        return <option key={parent.id} value={parent.id}>{parent.name}</option>;
+                                    })}
                                 </select>
                             </div>
 
