@@ -225,3 +225,56 @@ export async function createCategory(data: { name: string; description?: string 
     revalidatePath("/dashboard/products");
     return category;
 }
+
+/**
+ * Generate next SKU for a given category
+ * Format: {CATEGORY_PREFIX}-{COUNTER_3_DIGIT}
+ * Example: ELK-001, ELK-002, etc.
+ */
+export async function generateNextSKU(categoryId: number) {
+    if (MOCK_ENABLED) {
+        const category = mockCategories.find(c => c.id === categoryId);
+        if (!category) return "";
+        const prefix = category.name.substring(0, 3).toUpperCase();
+        const existingProducts = mockProducts.filter(p => p.categoryId === categoryId);
+        const counter = existingProducts.length + 1;
+        return `${prefix}-${String(counter).padStart(3, "0")}`;
+    }
+
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
+
+    // Get category with prefix
+    const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { name: true, prefix: true },
+    });
+
+    if (!category) throw new Error("Category not found");
+
+    // Determine prefix: use category.prefix or generate from first 3 letters
+    const prefix = category.prefix || category.name.substring(0, 3).toUpperCase();
+
+    // Find the highest counter for this prefix
+    const products = await prisma.product.findMany({
+        where: {
+            categoryId,
+            sku: { startsWith: prefix },
+        },
+        select: { sku: true },
+        orderBy: { sku: "desc" },
+    });
+
+    let counter = 1;
+    if (products.length > 0) {
+        // Extract counter from last SKU (format: PREFIX-###)
+        const lastSKU = products[0].sku;
+        const match = lastSKU.match(/-(\d+)$/);
+        if (match) {
+            counter = parseInt(match[1], 10) + 1;
+        }
+    }
+
+    return `${prefix}-${String(counter).padStart(3, "0")}`;
+}
+

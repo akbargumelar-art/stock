@@ -9,6 +9,7 @@ import {
     deleteProduct,
     getCategories,
     createCategory,
+    generateNextSKU,
 } from "@/actions/product-actions";
 import {
     getStockStatus,
@@ -25,6 +26,9 @@ import {
     QrCode,
     Filter,
     FolderPlus,
+    Eye,
+    EyeOff,
+    Sparkles,
 } from "lucide-react";
 
 interface Product {
@@ -60,6 +64,8 @@ export default function ProductsPage() {
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editProduct, setEditProduct] = useState<Product | null>(null);
     const [printProduct, setPrintProduct] = useState<Product | null>(null);
+    const [showQRCode, setShowQRCode] = useState<number | null>(null);
+    const [isAutoSKU, setIsAutoSKU] = useState(true);
     const printRef = useRef<HTMLDivElement>(null);
 
     const [form, setForm] = useState({
@@ -146,6 +152,7 @@ export default function ProductsPage() {
 
     const openEdit = (product: Product) => {
         setEditProduct(product);
+        setIsAutoSKU(false);
         setForm({
             sku: product.sku,
             name: product.name,
@@ -160,6 +167,7 @@ export default function ProductsPage() {
     };
 
     const resetForm = () => {
+        setIsAutoSKU(true);
         setForm({
             sku: "",
             name: "",
@@ -175,6 +183,24 @@ export default function ProductsPage() {
     const handlePrint = (product: Product) => {
         setPrintProduct(product);
         setTimeout(() => window.print(), 200);
+    };
+
+    const toggleQRCode = (productId: number) => {
+        setShowQRCode(prev => prev === productId ? null : productId);
+    };
+
+    const handleCategoryChange = async (categoryId: number) => {
+        setForm({ ...form, categoryId });
+
+        // Auto-generate SKU only if user hasn't manually edited it
+        if (isAutoSKU && !editProduct) {
+            try {
+                const sku = await generateNextSKU(categoryId);
+                setForm(prev => ({ ...prev, sku, categoryId }));
+            } catch (error) {
+                console.error("Failed to generate SKU:", error);
+            }
+        }
     };
 
     return (
@@ -327,6 +353,19 @@ export default function ProductsPage() {
                                             {isAdmin && (
                                                 <td>
                                                     <div className="flex items-center gap-1">
+                                                        {product.qrCode && (
+                                                            <button
+                                                                onClick={() => toggleQRCode(product.id)}
+                                                                className="btn btn-ghost p-1.5"
+                                                                title={showQRCode === product.id ? "Hide QR" : "Show QR"}
+                                                            >
+                                                                {showQRCode === product.id ? (
+                                                                    <EyeOff size={14} className="text-[var(--accent)]" />
+                                                                ) : (
+                                                                    <Eye size={14} />
+                                                                )}
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => handlePrint(product)}
                                                             className="btn btn-ghost p-1.5"
@@ -349,6 +388,15 @@ export default function ProductsPage() {
                                                             <Trash2 size={14} />
                                                         </button>
                                                     </div>
+                                                    {/* QR Code Display */}
+                                                    {showQRCode === product.id && product.qrCode && (
+                                                        <div className="qr-display mt-2">
+                                                            <img src={product.qrCode} alt={`QR: ${product.sku}`} />
+                                                            <div className="text-xs text-center mt-1 font-mono">
+                                                                {product.sku}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </td>
                                             )}
                                         </tr>
@@ -383,14 +431,20 @@ export default function ProductsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                        SKU *
+                                        SKU * {isAutoSKU && !editProduct && (
+                                            <span className="inline-flex items-center gap-1 text-[var(--accent)] text-xs">
+                                                <Sparkles size={12} />
+                                                Auto
+                                            </span>
+                                        )}
                                     </label>
                                     <input
                                         type="text"
                                         value={form.sku}
-                                        onChange={(e) =>
-                                            setForm({ ...form, sku: e.target.value.toUpperCase() })
-                                        }
+                                        onChange={(e) => {
+                                            setIsAutoSKU(false);
+                                            setForm({ ...form, sku: e.target.value.toUpperCase() });
+                                        }}
                                         className="input font-mono"
                                         placeholder="ELK-001"
                                         required
@@ -430,9 +484,7 @@ export default function ProductsPage() {
                                 </label>
                                 <select
                                     value={form.categoryId}
-                                    onChange={(e) =>
-                                        setForm({ ...form, categoryId: Number(e.target.value) })
-                                    }
+                                    onChange={(e) => handleCategoryChange(Number(e.target.value))}
                                     className="input"
                                     required
                                 >

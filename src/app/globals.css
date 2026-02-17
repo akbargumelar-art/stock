@@ -47,13 +47,16 @@ body {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-primary);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--text-muted);
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
@@ -93,34 +96,66 @@ body {
 }
 
 @keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Subtle pulse for alerts */
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
+
 .pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
 /* Fade in animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
 /* Slide up for modals */
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
+
 .animate-slide-up {
   animation: slideUp 0.25s ease-out forwards;
 }
@@ -196,6 +231,7 @@ body {
   background: var(--accent);
   color: white;
 }
+
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-dark);
   transform: translateY(-1px);
@@ -207,6 +243,7 @@ body {
   color: var(--text-primary);
   border: 1px solid var(--border-color);
 }
+
 .btn-secondary:hover:not(:disabled) {
   background: var(--border-color);
 }
@@ -215,6 +252,7 @@ body {
   background: #ef4444;
   color: white;
 }
+
 .btn-danger:hover:not(:disabled) {
   background: #dc2626;
 }
@@ -223,6 +261,7 @@ body {
   background: transparent;
   color: var(--text-secondary);
 }
+
 .btn-ghost:hover:not(:disabled) {
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -292,6 +331,38 @@ select.input {
   max-width: 32rem;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+/* QR Code Display (non-print) */
+.qr-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.qr-display img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Mobile Modal Fix */
+@media (max-width: 640px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    margin-top: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
 }
 
 /* Print styles for QR labels */
