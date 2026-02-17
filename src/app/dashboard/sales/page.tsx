@@ -50,6 +50,7 @@ interface SaleRecord {
     items: {
         qty: number;
         sellingPrice: number;
+        costPrice: number;
         product: { sku: string; name: string };
     }[];
 }
@@ -584,7 +585,12 @@ export default function SalesPage() {
                                                     {sale._count.items}
                                                 </td>
                                                 <td className="text-right font-mono text-sm font-medium">
-                                                    {formatRp(sale.totalAmount)}
+                                                    <div className="flex flex-col">
+                                                        <span>{formatRp(sale.totalAmount)}</span>
+                                                        <span className="text-[10px] text-[var(--text-muted)]">
+                                                            Buy: {formatRp(sale.items.reduce((sum, item) => sum + (item.qty * item.costPrice), 0))}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                                 <td className="hidden sm:table-cell text-xs text-[var(--text-muted)]">
                                                     {formatDate(sale.saleDate)}
