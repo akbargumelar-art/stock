@@ -81,6 +81,7 @@ model Product {
   description  String?  @db.Text
   unit         String   @default("pcs") @db.VarChar(50)
   price        Int      @default(0)
+  image        String?  @db.Text
   minStock     Int      @default(0) @map("min_stock")
   currentStock Int      @default(0) @map("current_stock")
   qrCode       String?  @db.Text @map("qr_code")

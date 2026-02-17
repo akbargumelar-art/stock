@@ -32,10 +32,10 @@ export const mockSession = {
 
 // ---------- Categories ----------
 export const mockCategories = [
-    { id: 1, name: "Elektronik", description: "Perangkat elektronik" },
-    { id: 2, name: "Furnitur", description: "Meja, kursi, lemari" },
-    { id: 3, name: "ATK", description: "Alat tulis kantor" },
-    { id: 4, name: "Perlengkapan", description: "Perlengkapan umum" },
+    { id: 1, name: "Elektronik", prefix: "ELK", description: "Perangkat elektronik" },
+    { id: 2, name: "Furnitur", prefix: "FRN", description: "Meja, kursi, lemari" },
+    { id: 3, name: "ATK", prefix: "ATK", description: "Alat tulis kantor" },
+    { id: 4, name: "Perlengkapan", prefix: "PLK", description: "Perlengkapan umum" },
 ];
 
 // ---------- Products ----------
@@ -43,56 +43,56 @@ export const mockProducts = [
     {
         id: 1, sku: "ELK-001", name: "Laptop Lenovo ThinkPad", categoryId: 1,
         description: "ThinkPad T14 Gen5", unit: "unit", price: 12500000,
-        minStock: 5, currentStock: 3, qrCode: null,
+        minStock: 5, currentStock: 3, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-15"), updatedAt: new Date("2026-02-10"),
         category: { id: 1, name: "Elektronik" },
     },
     {
         id: 2, sku: "ELK-002", name: "Monitor Samsung 24\"", categoryId: 1,
         description: "24\" IPS FHD", unit: "unit", price: 2800000,
-        minStock: 10, currentStock: 15, qrCode: null,
+        minStock: 10, currentStock: 15, qrCode: null, image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=150&q=80",
         createdBy: "u1", createdAt: new Date("2026-01-15"), updatedAt: new Date("2026-02-10"),
         category: { id: 1, name: "Elektronik" },
     },
     {
         id: 3, sku: "ELK-003", name: "Keyboard Mechanical", categoryId: 1,
         description: "Cherry MX Brown", unit: "pcs", price: 850000,
-        minStock: 15, currentStock: 22, qrCode: null,
+        minStock: 15, currentStock: 22, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-16"), updatedAt: new Date("2026-02-12"),
         category: { id: 1, name: "Elektronik" },
     },
     {
         id: 4, sku: "FRN-001", name: "Meja Kantor 120cm", categoryId: 2,
         description: "Meja kerja ukuran 120x60", unit: "unit", price: 1500000,
-        minStock: 3, currentStock: 8, qrCode: null,
+        minStock: 3, currentStock: 8, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-17"), updatedAt: new Date("2026-02-08"),
         category: { id: 2, name: "Furnitur" },
     },
     {
         id: 5, sku: "FRN-002", name: "Kursi Ergonomic", categoryId: 2,
         description: "Kursi kantor adjustable", unit: "unit", price: 2200000,
-        minStock: 5, currentStock: 2, qrCode: null,
+        minStock: 5, currentStock: 2, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-17"), updatedAt: new Date("2026-02-14"),
         category: { id: 2, name: "Furnitur" },
     },
     {
         id: 6, sku: "ATK-001", name: "Kertas A4 70gsm", categoryId: 3,
         description: "Rim kertas HVS", unit: "rim", price: 55000,
-        minStock: 50, currentStock: 35, qrCode: null,
+        minStock: 50, currentStock: 35, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-18"), updatedAt: new Date("2026-02-15"),
         category: { id: 3, name: "ATK" },
     },
     {
         id: 7, sku: "ATK-002", name: "Pulpen Pilot G2", categoryId: 3,
         description: "Gel pen 0.5mm hitam", unit: "pcs", price: 15000,
-        minStock: 100, currentStock: 180, qrCode: null,
+        minStock: 100, currentStock: 180, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-18"), updatedAt: new Date("2026-02-16"),
         category: { id: 3, name: "ATK" },
     },
     {
         id: 8, sku: "PLK-001", name: "Dispenser Galon", categoryId: 4,
         description: "Hot & Cold dispenser", unit: "unit", price: 750000,
-        minStock: 2, currentStock: 4, qrCode: null,
+        minStock: 2, currentStock: 4, qrCode: null, image: null,
         createdBy: "u1", createdAt: new Date("2026-01-20"), updatedAt: new Date("2026-02-10"),
         category: { id: 4, name: "Perlengkapan" },
     },

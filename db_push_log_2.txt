@@ -1,0 +1,7 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": MySQL database "inventory_db" at "localhost:3306"
+
+Error: P1001: Can't reach database server at `localhost:3306`
+
+Please make sure your database server is running at `localhost:3306`.

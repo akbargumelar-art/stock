@@ -29,9 +29,13 @@ const navItems = [
 export default function Sidebar({
     isOpen,
     onClose,
+    isCollapsed,
+    toggleCollapse,
 }: {
     isOpen: boolean;
     onClose: () => void;
+    isCollapsed: boolean;
+    toggleCollapse: () => void;
 }) {
     const pathname = usePathname();
 
@@ -47,23 +51,24 @@ export default function Sidebar({
 
             <aside
                 className={clsx(
-                    "sidebar w-64 h-screen flex flex-col border-r fixed top-0 left-0",
+                    "sidebar h-screen flex flex-col border-r fixed top-0 left-0 transition-all duration-300",
                     "bg-[var(--bg-secondary)] border-[var(--border-color)]",
-                    isOpen && "open"
+                    isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+                    isCollapsed ? "w-20" : "w-64"
                 )}
                 style={{ zIndex: 40 }}
             >
                 {/* Logo */}
-                <div className="flex items-center justify-between p-5 border-b border-[var(--border-color)]">
-                    <Link href="/dashboard" className="flex items-center gap-3 no-underline">
-                        <div className="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center">
+                <div className={clsx("flex items-center p-4 h-16 border-b border-[var(--border-color)]", isCollapsed ? "justify-center" : "justify-between")}>
+                    <Link href="/dashboard" className="flex items-center gap-3 no-underline overflow-hidden">
+                        <div className="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center flex-shrink-0">
                             <Box size={20} className="text-white" />
                         </div>
-                        <div>
-                            <h1 className="text-base font-bold text-[var(--text-primary)] leading-tight">
+                        <div className={clsx("transition-opacity duration-300", isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100")}>
+                            <h1 className="text-base font-bold text-[var(--text-primary)] leading-tight whitespace-nowrap">
                                 StockFlow
                             </h1>
-                            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap">
                                 Inventory System
                             </p>
                         </div>
@@ -77,7 +82,7 @@ export default function Sidebar({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
                     {navItems.map((item) => {
                         const isActive =
                             pathname === item.href ||
@@ -87,23 +92,35 @@ export default function Sidebar({
                                 key={item.href}
                                 href={item.href}
                                 onClick={onClose}
+                                title={isCollapsed ? item.label : ""}
                                 className={clsx(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 no-underline",
                                     isActive
                                         ? "bg-[var(--accent)] text-white shadow-md shadow-indigo-500/20"
-                                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
+                                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]",
+                                    isCollapsed && "justify-center px-2"
                                 )}
                             >
-                                <item.icon size={18} />
-                                {item.label}
+                                <item.icon size={20} className="flex-shrink-0" />
+                                <span className={clsx("transition-all duration-300 whitespace-nowrap", isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100")}>
+                                    {item.label}
+                                </span>
                             </Link>
                         );
                     })}
                 </nav>
 
-                {/* Footer */}
-                <div className="p-4 border-t border-[var(--border-color)]">
-                    <p className="text-[11px] text-[var(--text-muted)] text-center">
+                {/* Footer / Toggle */}
+                <div className="p-3 border-t border-[var(--border-color)] flex flex-col gap-2">
+                    <button
+                        onClick={toggleCollapse}
+                        className="hidden md:flex items-center justify-center p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isCollapsed ? <ArrowRightLeft size={18} /> : <div className="flex items-center gap-2 w-full"><ArrowRightLeft size={18} /><span className="text-xs">Collapse Sidebar</span></div>}
+                    </button>
+
+                    <p className={clsx("text-[10px] text-[var(--text-muted)] text-center transition-opacity duration-300", isCollapsed ? "opacity-0 hidden" : "opacity-100")}>
                         © 2026 Aarasa
                     </p>
                 </div>

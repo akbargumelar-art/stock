@@ -100,6 +100,7 @@ export async function createProduct(data: {
     price?: number;
     minStock: number;
     currentStock: number;
+    image?: string;
 }) {
     if (MOCK_ENABLED) {
         return { id: mockProducts.length + 1, ...data, qrCode: null, createdAt: new Date(), updatedAt: new Date() };
@@ -144,6 +145,7 @@ export async function updateProduct(
         price?: number;
         minStock?: number;
         currentStock?: number;
+        image?: string;
     }
 ) {
     if (MOCK_ENABLED) return { id, ...data };

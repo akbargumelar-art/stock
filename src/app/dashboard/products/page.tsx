@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import toast, { Toaster } from "react-hot-toast";
@@ -10,14 +10,9 @@ import {
     updateProduct,
     deleteProduct,
     getCategories,
-    createCategory,
     generateNextSKU,
 } from "@/actions/product-actions";
-import {
-    getStockStatus,
-    getStockStatusColor,
-    getStockStatusLabel,
-} from "@/lib/stock-status";
+import { createCategory } from "@/actions/category-actions";
 import {
     Plus,
     Search,
@@ -31,9 +26,13 @@ import {
     Eye,
     EyeOff,
     Sparkles,
+    Box,
+    ImageIcon,
+    Package
 } from "lucide-react";
 
-interface Product {
+// Update interface to include image
+interface ProductWithCategory {
     id: number;
     sku: string;
     name: string;
@@ -44,69 +43,68 @@ interface Product {
     minStock: number;
     currentStock: number;
     qrCode: string | null;
-    category: { id: number; name: string };
-}
-
-interface Category {
-    id: number;
-    name: string;
-    description: string | null;
+    image: string | null; // Added
+    category: {
+        id: number;
+        name: string;
+    };
 }
 
 export default function ProductsPage() {
     const { data: session } = useSession();
     const isAdmin = session?.user?.role === "ADMIN";
-    const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+
+    const [products, setProducts] = useState<ProductWithCategory[]>([]);
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [filterCategory, setFilterCategory] = useState<number | undefined>();
-    const [filterStatus, setFilterStatus] = useState<string>("");
-    const [showModal, setShowModal] = useState(false);
-    const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [editProduct, setEditProduct] = useState<Product | null>(null);
-    const [printProduct, setPrintProduct] = useState<Product | null>(null);
-    const [showQRCode, setShowQRCode] = useState<number | null>(null);
-    const [isAutoSKU, setIsAutoSKU] = useState(true);
-    const printRef = useRef<HTMLDivElement>(null);
+    const [filterCategory, setFilterCategory] = useState("all");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
+    const [showModal, setShowModal] = useState(false);
+    const [editProduct, setEditProduct] = useState<ProductWithCategory | null>(null);
     const [form, setForm] = useState({
         sku: "",
         name: "",
         categoryId: 0,
         description: "",
-        unit: "pcs",
+        unit: "",
         price: 0,
-        minStock: 0,
+        minStock: 5,
         currentStock: 0,
+        image: "",
     });
 
-    const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
+    // Auto-SKU state
+    const [isAutoSKU, setIsAutoSKU] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    const fetchData = async () => {
-        setLoading(true);
+    // Print state
+    const [printProduct, setPrintProduct] = useState<ProductWithCategory | null>(null);
+    const printRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
         try {
-            const [prods, cats] = await Promise.all([
-                getProducts({
-                    search: search || undefined,
-                    categoryId: filterCategory || undefined,
-                    status: filterStatus || undefined,
-                }),
+            // Fix: Cast the response to match ProductWithCategory if needed, or update the action return type
+            const [fetchedProducts, fetchedCategories] = await Promise.all([
+                getProducts(),
                 getCategories(),
             ]);
-            setProducts(prods as Product[]);
-            setCategories(cats as Category[]);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setProducts(fetchedProducts as any);
+            setCategories(fetchedCategories);
         } catch (error) {
-            console.error(error);
+            console.error("Failed to load data:", error);
+            toast.error("Failed to load data");
         } finally {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchData();
-    }, [search, filterCategory, filterStatus]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -114,18 +112,18 @@ export default function ProductsPage() {
         try {
             if (editProduct) {
                 await updateProduct(editProduct.id, form);
-                toast.success("Product updated successfully!");
+                toast.success("Product updated successfully");
             } else {
                 await createProduct(form);
-                toast.success("Product created successfully!");
+                toast.success("Product created successfully");
             }
             setShowModal(false);
             setEditProduct(null);
             resetForm();
-            fetchData();
+            loadData();
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to save product. Please try again.");
+            console.error("Failed to save product:", error);
+            toast.error("Failed to save product");
         } finally {
             setSaving(false);
         }
@@ -135,32 +133,17 @@ export default function ProductsPage() {
         if (!confirm("Are you sure you want to delete this product?")) return;
         try {
             await deleteProduct(id);
-            toast.success("Product deleted successfully!");
-            fetchData();
+            toast.success("Product deleted successfully");
+            loadData();
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to delete product. Please try again.");
+            console.error("Failed to delete product:", error);
+            toast.error("Failed to delete product");
         }
     };
 
-    const handleCreateCategory = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await createCategory(categoryForm);
-            toast.success("Category created successfully!");
-            setCategoryForm({ name: "", description: "" });
-            setShowCategoryModal(false);
-            const cats = await getCategories();
-            setCategories(cats as Category[]);
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to create category. Please try again.");
-        }
-    };
-
-    const openEdit = (product: Product) => {
+    const openEdit = (product: ProductWithCategory) => {
         setEditProduct(product);
-        setIsAutoSKU(false);
+        setIsAutoSKU(false); // Disable auto-gen when editing
         setForm({
             sku: product.sku,
             name: product.name,
@@ -170,12 +153,12 @@ export default function ProductsPage() {
             price: product.price,
             minStock: product.minStock,
             currentStock: product.currentStock,
+            image: product.image || "",
         });
         setShowModal(true);
     };
 
     const resetForm = () => {
-        setIsAutoSKU(true);
         setForm({
             sku: "",
             name: "",
@@ -183,257 +166,317 @@ export default function ProductsPage() {
             description: "",
             unit: "pcs",
             price: 0,
-            minStock: 0,
+            minStock: 5,
             currentStock: 0,
+            image: "",
         });
+        setIsAutoSKU(true);
     };
 
-    const handlePrint = (product: Product) => {
+    const handlePrint = (product: ProductWithCategory) => {
         setPrintProduct(product);
-        setTimeout(() => window.print(), 200);
+        // Wait for state update and render
+        setTimeout(() => {
+            window.print();
+            // Clear print product after printing (optional, but good for cleanup)
+            // setPrintProduct(null); 
+        }, 100);
     };
 
-    const toggleQRCode = (productId: number) => {
-        if (showQRCode === productId) {
-            setShowQRCode(null);
+    const toggleQRCode = (id: number) => {
+        if (expandedRow === id) {
+            setExpandedRow(null);
         } else {
-            setShowQRCode(productId);
+            setExpandedRow(id);
         }
     };
 
     const handleCategoryChange = async (categoryId: number) => {
         setForm({ ...form, categoryId });
-
-        // Auto-generate SKU only if user hasn't manually edited it
-        if (isAutoSKU && !editProduct) {
+        // Only generate SKU if creating new product and auto-gen is enabled
+        if (!editProduct && isAutoSKU) {
             try {
-                const sku = await generateNextSKU(categoryId);
-                setForm(prev => ({ ...prev, sku, categoryId }));
+                const nextSKU = await generateNextSKU(categoryId);
+                setForm(prev => ({ ...prev, sku: nextSKU, categoryId }));
             } catch (error) {
                 console.error("Failed to generate SKU:", error);
             }
         }
     };
 
+    const getStockStatus = (current: number, min: number) => {
+        if (current < min) return "LOW";
+        if (current > min * 2) return "OVER_STOCK";
+        return "IN_STOCK";
+    };
+
+    const getStockStatusLabel = (status: string) => {
+        switch (status) {
+            case "LOW":
+                return "Low Stock";
+            case "OVER_STOCK":
+                return "Over Stock";
+            default:
+                return "In Stock";
+        }
+    };
+
+    const getStockStatusColor = (status: string) => {
+        switch (status) {
+            case "LOW":
+                return "badge-error";
+            case "OVER_STOCK":
+                return "badge-warning";
+            default:
+                return "badge-success";
+        }
+    };
+
+    const filteredProducts = products.filter(product => {
+        const matchesSearch = search
+            ? product.sku.toLowerCase().includes(search.toLowerCase()) ||
+            product.name.toLowerCase().includes(search.toLowerCase())
+            : true;
+        const matchesCategory = filterCategory !== "all"
+            ? product.categoryId === Number(filterCategory)
+            : true;
+
+        let matchesStatus = true;
+        if (filterStatus !== "all") {
+            const status = getStockStatus(product.currentStock, product.minStock);
+            matchesStatus = status === filterStatus;
+        }
+
+        return matchesSearch && matchesCategory && matchesStatus;
+    });
+
     return (
-        <div className="space-y-6 animate-fade-in">
-            <Toaster position="top-right" />
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-6 animate-fade-in relative z-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Products</h1>
-                    <p className="text-sm text-[var(--text-muted)] mt-1">
-                        Manage your SKU-based inventory
+                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
+                        Products
+                    </h1>
+                    <p className="text-[var(--text-secondary)] mt-1">
+                        Manage your product inventory
                     </p>
                 </div>
-                {isAdmin && (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setShowCategoryModal(true)}
-                            className="btn btn-secondary"
-                        >
-                            <FolderPlus size={16} />
-                            <span className="hidden sm:inline">Category</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                resetForm();
-                                setEditProduct(null);
-                                setShowModal(true);
-                            }}
-                            className="btn btn-primary"
-                        >
-                            <Plus size={16} />
-                            Add Product
-                        </button>
-                    </div>
-                )}
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                        onClick={() => {
+                            setEditProduct(null);
+                            resetForm();
+                            setShowModal(true);
+                        }}
+                        className="btn btn-primary flex-1 sm:flex-none justify-center shadow-lg shadow-indigo-500/20"
+                    >
+                        <Plus size={18} />
+                        Add Product
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
-            <div className="card-neu p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <div className="sm:col-span-6 relative">
-                        <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-                        />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by SKU or name..."
-                            className="input pl-9 w-full"
-                        />
-                    </div>
-                    <div className="sm:col-span-3">
-                        <select
-                            value={filterCategory || ""}
-                            onChange={(e) =>
-                                setFilterCategory(e.target.value ? Number(e.target.value) : undefined)
-                            }
-                            className="input w-full"
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="sm:col-span-3">
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="input w-full"
-                        >
-                            <option value="">All Status</option>
-                            <option value="LOW">Low Stock</option>
-                            <option value="IN_STOCK">In Stock</option>
-                            <option value="OVER_STOCK">Over Stock</option>
-                        </select>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="md:col-span-2 relative">
+                    <Search
+                        size={18}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Search by SKU or name..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="input pl-10 w-full"
+                    />
+                </div>
+                <div>
+                    <select
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="input w-full"
+                    >
+                        <option value="all">All Categories</option>
+                        {categories.map((c) => (
+                            <option key={c.id} value={c.id.toString()}>
+                                {c.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="input w-full"
+                    >
+                        <option value="ALL">All Status</option>
+                        <option value="LOW">Low Stock</option>
+                        <option value="OVER_STOCK">Over Stock</option>
+                        <option value="IN_STOCK">In Stock</option>
+                    </select>
                 </div>
             </div>
 
             {/* Table */}
             <div className="card-neu overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="data-table">
+                    <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr>
-                                <th>SKU</th>
-                                <th>Name</th>
-                                <th className="hidden md:table-cell">Category</th>
-                                <th className="hidden sm:table-cell">Unit</th>
-                                <th>Stock</th>
-                                <th>Status</th>
-                                <th className="hidden md:table-cell">QR</th>
-                                {isAdmin && <th className="w-24">Actions</th>}
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-tertiary)]/50 text-xs uppercase text-[var(--text-secondary)]">
+                                <th className="py-3 px-4 font-semibold">SKU</th>
+                                <th className="py-3 px-4 font-semibold">Name</th>
+                                <th className="py-3 px-4 font-semibold">Category</th>
+                                <th className="py-3 px-4 font-semibold">Unit</th>
+                                <th className="py-3 px-4 font-semibold">Stock</th>
+                                <th className="py-3 px-4 font-semibold">Status</th>
+                                <th className="py-3 px-4 font-semibold hidden md:table-cell">QR</th>
+                                {isAdmin && <th className="py-3 px-4 font-semibold text-right">Actions</th>}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-[var(--border-color)]">
                             {loading ? (
                                 <tr>
                                     <td colSpan={8} className="text-center py-12">
                                         <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" />
                                     </td>
                                 </tr>
-                            ) : products.length === 0 ? (
+                            ) : filteredProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="text-center py-12 text-[var(--text-muted)]">
-                                        No products found
+                                    <td colSpan={8} className="py-8 text-center text-[var(--text-muted)]">
+                                        No products found.
                                     </td>
                                 </tr>
                             ) : (
-                                products.map((product) => {
-                                    const status = getStockStatus(
-                                        product.currentStock,
-                                        product.minStock
-                                    );
+                                filteredProducts.map((product) => {
+                                    const status = getStockStatus(product.currentStock, product.minStock);
                                     return (
-                                        <tr key={product.id}>
-                                            <td className="font-mono text-xs font-semibold">
-                                                <Link href={`/dashboard/products/${product.id}`} className="hover:text-[var(--accent)] hover:underline block w-full h-full">
-                                                    {product.sku}
-                                                </Link>
-                                            </td>
-                                            <td className="font-medium">
-                                                <Link href={`/dashboard/products/${product.id}`} className="hover:text-[var(--accent)] hover:underline block w-full h-full">
-                                                    {product.name}
-                                                </Link>
-                                            </td>
-                                            <td className="hidden md:table-cell text-[var(--text-secondary)]">
-                                                {product.category.name}
-                                            </td>
-                                            <td className="hidden sm:table-cell text-[var(--text-secondary)]">
-                                                {product.unit}
-                                            </td>
-                                            <td>
-                                                <span className="font-semibold">{product.currentStock}</span>
-                                                <span className="text-[var(--text-muted)]">
-                                                    /{product.minStock}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${getStockStatusColor(status)}`}>
-                                                    {getStockStatusLabel(status)}
-                                                </span>
-                                            </td>
-                                            <td className="hidden md:table-cell">
-                                                {product.qrCode ? (
-                                                    <button
-                                                        onClick={() => handlePrint(product)}
-                                                        className="btn btn-ghost p-1"
-                                                        title="Print QR"
-                                                    >
-                                                        <QrCode size={18} className="text-[var(--accent)]" />
-                                                    </button>
-                                                ) : (
-                                                    <span className="text-[var(--text-muted)]">—</span>
-                                                )}
-                                            </td>
-                                            {isAdmin && (
-                                                <td>
-                                                    <div className="flex items-center gap-1">
-                                                        {product.qrCode && (
-                                                            <button
-                                                                onClick={() => toggleQRCode(product.id)}
-                                                                className="btn btn-ghost p-1.5"
-                                                                title={showQRCode === product.id ? "Hide QR" : "Show QR"}
-                                                            >
-                                                                {showQRCode === product.id ? (
-                                                                    <EyeOff size={14} className="text-[var(--accent)]" />
-                                                                ) : (
-                                                                    <Eye size={14} />
-                                                                )}
-                                                            </button>
+                                        <React.Fragment key={product.id}>
+                                            <tr className="hover:bg-[var(--bg-tertiary)]/50 transition-colors">
+                                                <td className="py-3 px-4 font-mono text-sm font-medium text-[var(--text-primary)]">
+                                                    <Link href={`/dashboard/products/${product.id}`} className="hover:text-[var(--accent)] hover:underline">
+                                                        {product.sku}
+                                                    </Link>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-3">
+                                                        {product.image ? (
+                                                            <div className="w-10 h-10 rounded-md overflow-hidden bg-[var(--bg-tertiary)] flex-shrink-0 border border-[var(--border-color)]">
+                                                                <img
+                                                                    src={product.image}
+                                                                    alt={product.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-md bg-[var(--bg-tertiary)] flex-shrink-0 flex items-center justify-center text-[var(--text-muted)] border border-[var(--border-color)]">
+                                                                <Package size={16} />
+                                                            </div>
                                                         )}
-                                                        <button
-                                                            onClick={() => handlePrint(product)}
-                                                            className="btn btn-ghost p-1.5"
-                                                            title="Print QR Label"
-                                                        >
-                                                            <Printer size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => openEdit(product)}
-                                                            className="btn btn-ghost p-1.5"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit2 size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(product.id)}
-                                                            className="btn btn-ghost p-1.5 text-red-500"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                    {/* QR Code Display Overlay */}
-                                                    {showQRCode === product.id && product.qrCode && (
-                                                        <div className="absolute right-14 top-0 z-20 bg-white p-3 border rounded-lg shadow-xl animate-in fade-in zoom-in duration-200">
-                                                            <div className="flex justify-between items-start mb-2 gap-2">
-                                                                <span className="text-[10px] text-gray-500 font-mono bg-gray-100 px-1 rounded">{product.sku}</span>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setShowQRCode(null);
-                                                                    }}
-                                                                    className="text-gray-400 hover:text-gray-600 p-0.5 rounded-full hover:bg-gray-100 transition-colors"
-                                                                >
-                                                                    <X size={14} />
-                                                                </button>
-                                                            </div>
-                                                            <div className="bg-white p-1 rounded border border-gray-100">
-                                                                <img src={product.qrCode} alt={`QR: ${product.sku}`} className="w-32 h-32 object-contain" />
-                                                            </div>
+                                                        <div>
+                                                            <Link href={`/dashboard/products/${product.id}`} className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] hover:underline block">
+                                                                {product.name}
+                                                            </Link>
+                                                            {product.description && (
+                                                                <p className="text-xs text-[var(--text-secondary)] truncate max-w-[150px]">
+                                                                    {product.description}
+                                                                </p>
+                                                            )}
                                                         </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                                                    {product.category.name}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                                                    {product.unit}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <span className="font-semibold">{product.currentStock}</span>
+                                                    <span className="text-[var(--text-muted)] text-xs ml-1">
+                                                        / {product.minStock}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <span className={`badge ${getStockStatusColor(status)}`}>
+                                                        {getStockStatusLabel(status)}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4 hidden md:table-cell">
+                                                    {product.qrCode ? (
+                                                        <button
+                                                            onClick={() => toggleQRCode(product.id)}
+                                                            className={`btn btn-ghost p-1 ${expandedRow === product.id ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}`}
+                                                            title={expandedRow === product.id ? "Hide QR" : "Show QR"}
+                                                        >
+                                                            <QrCode size={18} />
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-[var(--text-muted)]">—</span>
                                                     )}
                                                 </td>
+                                                {isAdmin && (
+                                                    <td className="py-3 px-4 text-right">
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <button
+                                                                onClick={() => handlePrint(product)}
+                                                                className="btn btn-ghost p-1.5"
+                                                                title="Print QR Label"
+                                                            >
+                                                                <Printer size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openEdit(product)}
+                                                                className="btn btn-ghost p-1.5"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(product.id)}
+                                                                className="btn btn-ghost p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+
+                                            {/* Expanded Row for QR Code */}
+                                            {expandedRow === product.id && product.qrCode && (
+                                                <tr className="bg-[var(--bg-tertiary)]/30 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <td colSpan={8} className="p-4">
+                                                        <div className="flex items-center gap-6 bg-[var(--bg-primary)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm max-w-md">
+                                                            <div className="bg-white p-2 rounded shadow-sm">
+                                                                <img src={product.qrCode} alt={`QR: ${product.sku}`} className="w-32 h-32 object-contain" />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <div>
+                                                                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">SKU</p>
+                                                                    <p className="text-lg font-mono font-bold text-[var(--text-primary)]">{product.sku}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Product Name</p>
+                                                                    <p className="font-medium text-[var(--text-primary)]">{product.name}</p>
+                                                                </div>
+                                                                <div className="pt-2">
+                                                                    <button
+                                                                        onClick={() => handlePrint(product)}
+                                                                        className="btn btn-secondary text-xs flex items-center gap-2"
+                                                                    >
+                                                                        <Printer size={14} />
+                                                                        Print Label
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             )}
-                                        </tr>
+                                        </React.Fragment>
                                     );
                                 })
                             )}
@@ -446,7 +489,7 @@ export default function ProductsPage() {
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div
-                        className="modal-content animate-slide-up p-6"
+                        className="modal-content animate-slide-up p-6 max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-6">
@@ -462,7 +505,21 @@ export default function ProductsPage() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Image Preview */}
+                            <div className="flex justify-center mb-4">
+                                <div className="w-24 h-24 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden relative group">
+                                    {form.image ? (
+                                        <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="text-center p-2">
+                                            <ImageIcon size={24} className="mx-auto text-[var(--text-muted)] mb-1" />
+                                            <span className="text-[10px] text-[var(--text-muted)]">No Image</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                                         SKU * {isAutoSKU && !editProduct && (
@@ -479,7 +536,7 @@ export default function ProductsPage() {
                                             setIsAutoSKU(false);
                                             setForm({ ...form, sku: e.target.value.toUpperCase() });
                                         }}
-                                        className="input font-mono"
+                                        className="input font-mono w-full"
                                         placeholder="ELK-001"
                                         required
                                     />
@@ -492,7 +549,7 @@ export default function ProductsPage() {
                                         type="text"
                                         value={form.unit}
                                         onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                                        className="input"
+                                        className="input w-full"
                                         placeholder="pcs"
                                     />
                                 </div>
@@ -500,7 +557,7 @@ export default function ProductsPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Name *
+                                    Product Name *
                                 </label>
                                 <input
                                     type="text"
@@ -616,65 +673,7 @@ export default function ProductsPage() {
                 </div>
             )}
 
-            {/* Category Modal */}
-            {showCategoryModal && (
-                <div
-                    className="modal-overlay"
-                    onClick={() => setShowCategoryModal(false)}
-                >
-                    <div
-                        className="modal-content animate-slide-up p-6 max-w-sm"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                                New Category
-                            </h2>
-                            <button
-                                onClick={() => setShowCategoryModal(false)}
-                                className="btn btn-ghost p-1"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleCreateCategory} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={categoryForm.name}
-                                    onChange={(e) =>
-                                        setCategoryForm({ ...categoryForm, name: e.target.value })
-                                    }
-                                    className="input"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Description
-                                </label>
-                                <input
-                                    type="text"
-                                    value={categoryForm.description}
-                                    onChange={(e) =>
-                                        setCategoryForm({
-                                            ...categoryForm,
-                                            description: e.target.value,
-                                        })
-                                    }
-                                    className="input"
-                                />
-                            </div>
-                            <button type="submit" className="btn btn-primary w-full">
-                                Create Category
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
+
 
             {/* Print Area (hidden, used for printing) */}
             {printProduct && (

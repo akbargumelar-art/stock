@@ -18,17 +18,25 @@ const mockSession = {
     update: async () => null,
 };
 
+import clsx from "clsx";
+
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const realSession = useSession();
     const session = isMock ? mockSession.data : realSession.data;
 
     return (
         <div className="min-h-screen">
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                isCollapsed={isCollapsed}
+                toggleCollapse={() => setIsCollapsed(!isCollapsed)}
+            />
 
             {/* Main content */}
-            <div className="md:ml-64 min-h-screen flex flex-col">
+            <div className={clsx("min-h-screen flex flex-col transition-all duration-300", isCollapsed ? "md:ml-20" : "md:ml-64")}>
                 {/* Top bar */}
                 <header className="sticky top-0 z-20 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/80 backdrop-blur-xl">
                     <div className="flex items-center justify-between px-4 py-3 md:px-6">
