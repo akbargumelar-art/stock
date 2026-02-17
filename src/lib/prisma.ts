@@ -1,23 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as {
-    prisma: PrismaClient | undefined;
-};
+// Global singleton to prevent multiple instances
+let prismaInstance: PrismaClient | null = null;
 
-// Lazy initialization: only create PrismaClient when actually accessed
-// This prevents build-time instantiation when database isn't available
+// Function to get or create PrismaClient instance
 function getPrismaClient(): PrismaClient {
-    if (!globalForPrisma.prisma) {
-        globalForPrisma.prisma = new PrismaClient();
+    if (!prismaInstance) {
+        prismaInstance = new PrismaClient();
     }
-    return globalForPrisma.prisma;
+    return prismaInstance;
 }
 
-// Export a Proxy that creates the real client on first access
-export const prisma = new Proxy({} as PrismaClient, {
-    get(target, prop) {
-        const client = getPrismaClient();
-        const value = client[prop as keyof PrismaClient];
-        return typeof value === "function" ? value.bind(client) : value;
-    },
-});
+// Export the getter function as the default export
+// This ensures lazy initialization only when actually used
+export const prisma = getPrismaClient();
