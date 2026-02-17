@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { getDashboardStats } from "@/actions/dashboard-actions";
 import {
     Package,
@@ -353,7 +354,7 @@ export default function DashboardPage() {
 
             {/* Row 3: Secondary Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="card-neu p-4 text-center">
+                <Link href="/dashboard/products" className="card-neu p-4 text-center no-underline hover:border-[var(--accent)] transition-colors cursor-pointer">
                     <p className="text-2xl font-bold font-mono text-[var(--text-primary)]">
                         {data.totalProducts}
                     </p>
@@ -361,8 +362,8 @@ export default function DashboardPage() {
                         <Package size={12} className="inline mr-1" />
                         Products
                     </p>
-                </div>
-                <div className="card-neu p-4 text-center">
+                </Link>
+                <Link href="/dashboard/movements" className="card-neu p-4 text-center no-underline hover:border-[var(--accent)] transition-colors cursor-pointer">
                     <p className="text-2xl font-bold font-mono text-[var(--text-primary)]">
                         {data.totalMovements}
                     </p>
@@ -370,14 +371,14 @@ export default function DashboardPage() {
                         <TrendingUp size={12} className="inline mr-1" />
                         Movements
                     </p>
-                </div>
-                <div className="card-neu p-4 text-center">
+                </Link>
+                <Link href="/dashboard/products" className="card-neu p-4 text-center no-underline hover:border-[var(--accent)] transition-colors cursor-pointer">
                     <p className="text-2xl font-bold font-mono text-[var(--text-primary)]">
                         {data.overStockCount}
                     </p>
                     <p className="text-xs text-[var(--text-muted)] mt-1">Over Stock</p>
-                </div>
-                <div className="card-neu p-4 text-center">
+                </Link>
+                <Link href="/dashboard/sales" className="card-neu p-4 text-center no-underline hover:border-[var(--accent)] transition-colors cursor-pointer">
                     <p className="text-2xl font-bold font-mono text-[var(--text-primary)]">
                         {data.monthlySalesCount}
                     </p>
@@ -385,7 +386,7 @@ export default function DashboardPage() {
                         <ShoppingCart size={12} className="inline mr-1" />
                         Sales (Month)
                     </p>
-                </div>
+                </Link>
             </div>
         </div>
     );
