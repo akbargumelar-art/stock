@@ -563,8 +563,10 @@ export default function SalesPage() {
                                             <th>Invoice</th>
                                             <th>Customer</th>
                                             <th className="text-center">Items</th>
-                                            <th className="text-right">Total</th>
-                                            <th className="hidden sm:table-cell">Date</th>
+                                            <th className="text-right">H. Beli</th>
+                                            <th className="text-right">H. Jual</th>
+                                            <th className="text-right">Profit</th>
+                                            <th className="hidden lg:table-cell">Date</th>
                                             <th className="w-16">View</th>
                                         </tr>
                                     </thead>
@@ -584,15 +586,16 @@ export default function SalesPage() {
                                                 <td className="text-center font-mono">
                                                     {sale._count.items}
                                                 </td>
-                                                <td className="text-right font-mono text-sm font-medium">
-                                                    <div className="flex flex-col">
-                                                        <span>{formatRp(sale.totalAmount)}</span>
-                                                        <span className="text-[10px] text-[var(--text-muted)]">
-                                                            Buy: {formatRp(sale.items.reduce((sum, item) => sum + (item.qty * item.costPrice), 0))}
-                                                        </span>
-                                                    </div>
+                                                <td className="text-right font-mono text-sm text-[var(--text-secondary)]">
+                                                    {formatRp(sale.items.reduce((sum, item) => sum + (item.qty * item.costPrice), 0))}
                                                 </td>
-                                                <td className="hidden sm:table-cell text-xs text-[var(--text-muted)]">
+                                                <td className="text-right font-mono text-sm font-medium">
+                                                    {formatRp(sale.totalAmount)}
+                                                </td>
+                                                <td className="text-right font-mono text-sm font-semibold text-emerald-500">
+                                                    {formatRp(sale.totalAmount - sale.items.reduce((sum, item) => sum + (item.qty * item.costPrice), 0))}
+                                                </td>
+                                                <td className="hidden lg:table-cell text-xs text-[var(--text-muted)]">
                                                     {formatDate(sale.saleDate)}
                                                 </td>
                                                 <td>
@@ -690,13 +693,25 @@ export default function SalesPage() {
                             </table>
                         </div>
 
-                        <div className="flex justify-between items-end mt-4 pt-3 border-t border-[var(--border-color)]">
-                            <span className="text-sm font-medium text-[var(--text-secondary)]">
-                                Grand Total
-                            </span>
-                            <span className="text-xl font-bold font-mono text-[var(--text-primary)]">
-                                {formatRp(detailModal.totalAmount)}
-                            </span>
+                        <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-[var(--border-color)]">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-[var(--text-secondary)]">Total Cost (H. Beli)</span>
+                                <span className="font-mono">{formatRp(detailModal.items.reduce((s, i) => s + (i.qty * i.costPrice), 0))}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-[var(--text-secondary)]">Profit</span>
+                                <span className="font-mono text-emerald-500 font-semibold">
+                                    {formatRp(detailModal.totalAmount - detailModal.items.reduce((s, i) => s + (i.qty * i.costPrice), 0))}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-end mt-2">
+                                <span className="text-base font-bold text-[var(--text-primary)]">
+                                    Grand Total
+                                </span>
+                                <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">
+                                    {formatRp(detailModal.totalAmount)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
