@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -250,8 +251,8 @@ export default function ProductsPage() {
 
             {/* Filters */}
             <div className="card-neu p-4">
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div className="sm:col-span-6 relative">
                         <Search
                             size={16}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
@@ -261,33 +262,37 @@ export default function ProductsPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search by SKU or name..."
-                            className="input pl-9"
+                            className="input pl-9 w-full"
                         />
                     </div>
-                    <select
-                        value={filterCategory || ""}
-                        onChange={(e) =>
-                            setFilterCategory(e.target.value ? Number(e.target.value) : undefined)
-                        }
-                        className="input w-full sm:w-44"
-                    >
-                        <option value="">All Categories</option>
-                        {categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="input w-full sm:w-40"
-                    >
-                        <option value="">All Status</option>
-                        <option value="LOW">Low Stock</option>
-                        <option value="IN_STOCK">In Stock</option>
-                        <option value="OVER_STOCK">Over Stock</option>
-                    </select>
+                    <div className="sm:col-span-3">
+                        <select
+                            value={filterCategory || ""}
+                            onChange={(e) =>
+                                setFilterCategory(e.target.value ? Number(e.target.value) : undefined)
+                            }
+                            className="input w-full"
+                        >
+                            <option value="">All Categories</option>
+                            {categories.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="sm:col-span-3">
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="input w-full"
+                        >
+                            <option value="">All Status</option>
+                            <option value="LOW">Low Stock</option>
+                            <option value="IN_STOCK">In Stock</option>
+                            <option value="OVER_STOCK">Over Stock</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -329,9 +334,15 @@ export default function ProductsPage() {
                                     return (
                                         <tr key={product.id}>
                                             <td className="font-mono text-xs font-semibold">
-                                                {product.sku}
+                                                <Link href={`/dashboard/products/${product.id}`} className="hover:text-[var(--accent)] hover:underline block w-full h-full">
+                                                    {product.sku}
+                                                </Link>
                                             </td>
-                                            <td className="font-medium">{product.name}</td>
+                                            <td className="font-medium">
+                                                <Link href={`/dashboard/products/${product.id}`} className="hover:text-[var(--accent)] hover:underline block w-full h-full">
+                                                    {product.name}
+                                                </Link>
+                                            </td>
                                             <td className="hidden md:table-cell text-[var(--text-secondary)]">
                                                 {product.category.name}
                                             </td>
@@ -402,14 +413,22 @@ export default function ProductsPage() {
                                                     </div>
                                                     {/* QR Code Display Overlay */}
                                                     {showQRCode === product.id && product.qrCode && (
-                                                        <div className="absolute right-12 top-0 z-10 bg-white p-2 border rounded shadow-lg animate-in fade-in zoom-in duration-200">
-                                                            <div className="flex justify-between items-center mb-1">
-                                                                <span className="text-[10px] text-gray-500 font-mono">{product.sku}</span>
-                                                                <button onClick={() => setShowQRCode(null)} className="text-gray-400 hover:text-gray-600">
-                                                                    <X size={12} />
+                                                        <div className="absolute right-14 top-0 z-20 bg-white p-3 border rounded-lg shadow-xl animate-in fade-in zoom-in duration-200">
+                                                            <div className="flex justify-between items-start mb-2 gap-2">
+                                                                <span className="text-[10px] text-gray-500 font-mono bg-gray-100 px-1 rounded">{product.sku}</span>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setShowQRCode(null);
+                                                                    }}
+                                                                    className="text-gray-400 hover:text-gray-600 p-0.5 rounded-full hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    <X size={14} />
                                                                 </button>
                                                             </div>
-                                                            <img src={product.qrCode} alt={`QR: ${product.sku}`} className="w-24 h-24 object-contain" />
+                                                            <div className="bg-white p-1 rounded border border-gray-100">
+                                                                <img src={product.qrCode} alt={`QR: ${product.sku}`} className="w-32 h-32 object-contain" />
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </td>
