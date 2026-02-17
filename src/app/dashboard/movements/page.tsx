@@ -276,8 +276,8 @@ export default function MovementsPage() {
 
             {/* Date Filters */}
             <div className="card-neu p-4">
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                    <div className="flex-1">
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div className="w-full sm:flex-1">
                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                             From Date
                         </label>
@@ -288,7 +288,7 @@ export default function MovementsPage() {
                             className="input"
                         />
                     </div>
-                    <div className="flex-1">
+                    <div className="w-full sm:flex-1">
                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                             To Date
                         </label>
@@ -305,7 +305,7 @@ export default function MovementsPage() {
                             setDateTo("");
                             fetchMovements();
                         }}
-                        className="btn btn-secondary"
+                        className="btn btn-secondary w-full sm:w-auto"
                     >
                         Clear
                     </button>
