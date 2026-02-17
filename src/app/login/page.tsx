@@ -126,11 +126,6 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <div className="mt-6 pt-4 border-t border-[var(--border-color)]">
-                        <p className="text-xs text-[var(--text-muted)] text-center">
-                            Demo credentials: <span className="text-[var(--text-secondary)]">admin@aarasa.click</span> / <span className="text-[var(--text-secondary)]">admin123</span>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
