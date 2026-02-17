@@ -344,7 +344,7 @@ export default function ProductsPage() {
                         onChange={(e) => setFilterStatus(e.target.value)}
                         className="input w-full"
                     >
-                        <option value="ALL">All Status</option>
+                        <option value="all">All Status</option>
                         <option value="LOW">Low Stock</option>
                         <option value="OVER_STOCK">Over Stock</option>
                         <option value="IN_STOCK">In Stock</option>
