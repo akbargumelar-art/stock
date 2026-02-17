@@ -21,14 +21,25 @@ export async function POST(request: Request) {
         const filename = Date.now() + "_" + file.name.replaceAll(" ", "_");
         const uploadDir = path.join(process.cwd(), "public/uploads");
 
+        // Ensure directory exists at runtime
+        const { mkdir } = await import("fs/promises");
+        try {
+            await mkdir(uploadDir, { recursive: true });
+        } catch (e) {
+            console.error("Error creating upload directory:", e);
+        }
+
+        console.log("Saving file to:", path.join(uploadDir, filename));
+
         try {
             await writeFile(path.join(uploadDir, filename), buffer);
         } catch (error) {
             console.error("Error writing file:", error);
-            return NextResponse.json({ error: "Failed to save file" }, { status: 500 });
+            return NextResponse.json({ error: "Failed to save file", details: String(error) }, { status: 500 });
         }
 
         const fileUrl = `/uploads/${filename}`;
+        console.log("File saved successfully:", fileUrl);
         return NextResponse.json({ url: fileUrl });
     } catch (error) {
         console.error("Upload error:", error);

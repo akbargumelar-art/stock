@@ -649,10 +649,10 @@ export default function ProductsPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                        Cost Price
+                                        Cost Price (Harga Beli)
                                     </label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm">
@@ -666,25 +666,7 @@ export default function ProductsPage() {
                                             }
                                             className="input pl-9 w-full"
                                             min="0"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                        Selling Price
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm">
-                                            Rp
-                                        </span>
-                                        <input
-                                            type="number"
-                                            value={form.price}
-                                            onChange={(e) =>
-                                                setForm({ ...form, price: Number(e.target.value) })
-                                            }
-                                            className="input pl-9 w-full"
-                                            min="0"
+                                            required
                                         />
                                     </div>
                                 </div>
