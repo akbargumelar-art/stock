@@ -10,7 +10,7 @@ export async function getLocations() {
     if (MOCK_ENABLED) return mockLocations;
 
     const session = await auth();
-    if (!session?.user) throw new Error("Unauthorized");
+    if (!session?.user) return [];
 
     return prisma.location.findMany({
         include: {

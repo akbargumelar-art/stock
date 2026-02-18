@@ -74,12 +74,17 @@ export default function MovementsPage() {
     };
 
     useEffect(() => {
-        Promise.all([fetchMovements(), getProducts(), getLocations()]).then(
-            ([, prods, locs]) => {
+        const init = async () => {
+            await fetchMovements();
+            try {
+                const [prods, locs] = await Promise.all([getProducts(), getLocations()]);
                 setProducts(prods as unknown as Product[]);
                 setLocations(locs as unknown as Location[]);
+            } catch (error) {
+                console.error("Failed to load products/locations:", error);
             }
-        );
+        };
+        init();
     }, []);
 
     useEffect(() => {
