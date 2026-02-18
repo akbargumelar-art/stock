@@ -113,16 +113,21 @@ export default function ProductsPage() {
     }, []);
 
     const loadData = async () => {
+        // Load categories independently so product errors don't block the dropdown
         try {
-            const [fetchedProducts, fetchedCategories] = await Promise.all([
-                getProducts(),
-                getCategories(),
-            ]);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setProducts(fetchedProducts as any);
+            const fetchedCategories = await getCategories();
             setCategories(fetchedCategories);
         } catch (error) {
-            console.error("Failed to load data:", error);
+            console.error("Failed to load categories:", error);
+        }
+
+        // Load products separately
+        try {
+            const fetchedProducts = await getProducts();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setProducts(fetchedProducts as any);
+        } catch (error) {
+            console.error("Failed to load products:", error);
             toast.error("Gagal memuat data produk. Silakan refresh halaman.");
         } finally {
             setLoading(false);

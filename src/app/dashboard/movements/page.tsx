@@ -76,12 +76,19 @@ export default function MovementsPage() {
     useEffect(() => {
         const init = async () => {
             await fetchMovements();
+            // Load locations independently so product errors don't block the dropdown
             try {
-                const [prods, locs] = await Promise.all([getProducts(), getLocations()]);
-                setProducts(prods as unknown as Product[]);
+                const locs = await getLocations();
                 setLocations(locs as unknown as Location[]);
             } catch (error) {
-                console.error("Failed to load products/locations:", error);
+                console.error("Failed to load locations:", error);
+            }
+            // Load products separately
+            try {
+                const prods = await getProducts();
+                setProducts(prods as unknown as Product[]);
+            } catch (error) {
+                console.error("Failed to load products:", error);
             }
         };
         init();
