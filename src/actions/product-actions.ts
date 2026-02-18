@@ -108,6 +108,7 @@ export async function createProduct(data: {
     storeName?: string;
     storeLocation?: string;
     isConsumable?: boolean;
+    condition?: "NEW" | "USED" | "REFURBISHED";
 }) {
     if (MOCK_ENABLED) {
         return { id: mockProducts.length + 1, ...data, qrCode: null, createdAt: new Date(), updatedAt: new Date() };
@@ -151,6 +152,7 @@ export async function createProduct(data: {
             currentStock: data.currentStock,
             image: data.image,
             isConsumable: data.isConsumable || false,
+            condition: data.condition || "NEW",
             ...purchaseFields,
             qrCode,
             createdBy: session.user.id,
@@ -189,6 +191,7 @@ export async function updateProduct(
         storeName?: string;
         storeLocation?: string;
         isConsumable?: boolean;
+        condition?: "NEW" | "USED" | "REFURBISHED";
     }
 ) {
     if (MOCK_ENABLED) return { id, ...data };
@@ -239,6 +242,7 @@ export async function updateProduct(
             currentStock: data.currentStock,
             image: data.image,
             isConsumable: data.isConsumable,
+            condition: data.condition,
             ...purchaseFields,
             ...(qrCode ? { qrCode } : {}),
         },

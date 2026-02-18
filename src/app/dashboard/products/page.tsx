@@ -59,6 +59,7 @@ interface ProductWithCategory {
     storeName: string | null;
     storeLocation: string | null;
     isConsumable: boolean;
+    condition: "NEW" | "USED" | "REFURBISHED";
     category: {
         id: number;
         name: string;
@@ -96,6 +97,7 @@ export default function ProductsPage() {
         storeName: "",
         storeLocation: "",
         isConsumable: false,
+        condition: "NEW" as "NEW" | "USED" | "REFURBISHED",
     });
 
     // Auto-SKU state
@@ -112,7 +114,6 @@ export default function ProductsPage() {
 
     const loadData = async () => {
         try {
-            // Fix: Cast the response to match ProductWithCategory if needed, or update the action return type
             const [fetchedProducts, fetchedCategories] = await Promise.all([
                 getProducts(),
                 getCategories(),
@@ -122,7 +123,7 @@ export default function ProductsPage() {
             setCategories(fetchedCategories);
         } catch (error) {
             console.error("Failed to load data:", error);
-            toast.error("Failed to load data");
+            toast.error("Gagal memuat data produk. Silakan refresh halaman.");
         } finally {
             setLoading(false);
         }
@@ -192,6 +193,7 @@ export default function ProductsPage() {
             storeName: product.storeName || "",
             storeLocation: product.storeLocation || "",
             isConsumable: product.isConsumable || false,
+            condition: product.condition || "NEW",
         });
         setShowModal(true);
     };
@@ -214,6 +216,7 @@ export default function ProductsPage() {
             storeName: "",
             storeLocation: "",
             isConsumable: false,
+            condition: "NEW",
         });
         setIsAutoSKU(true);
     };
@@ -414,6 +417,7 @@ export default function ProductsPage() {
                                 <th className="py-3 px-4 font-semibold">Unit</th>
                                 <th className="py-3 px-4 font-semibold">Stock</th>
                                 <th className="py-3 px-4 font-semibold">Status</th>
+                                <th className="py-3 px-4 font-semibold hidden md:table-cell">Kondisi</th>
                                 <th className="py-3 px-4 font-semibold hidden md:table-cell">QR</th>
                                 {isAdmin && <th className="py-3 px-4 font-semibold text-right">Actions</th>}
                             </tr>
@@ -421,13 +425,13 @@ export default function ProductsPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={8} className="text-center py-12">
+                                    <td colSpan={9} className="text-center py-12">
                                         <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" />
                                     </td>
                                 </tr>
                             ) : filteredProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="py-8 text-center text-[var(--text-muted)]">
+                                    <td colSpan={9} className="py-8 text-center text-[var(--text-muted)]">
                                         No products found.
                                     </td>
                                 </tr>
@@ -488,6 +492,23 @@ export default function ProductsPage() {
                                                     <span className={`badge ${getStockStatusColor(status)}`}>
                                                         {getStockStatusLabel(status)}
                                                     </span>
+                                                </td>
+                                                <td className="py-3 px-4 hidden md:table-cell">
+                                                    {product.condition === "NEW" && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                            Baru
+                                                        </span>
+                                                    )}
+                                                    {product.condition === "USED" && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                            Bekas
+                                                        </span>
+                                                    )}
+                                                    {product.condition === "REFURBISHED" && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                            Refurbished
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="py-3 px-4 hidden md:table-cell">
                                                     {product.qrCode ? (
@@ -713,6 +734,23 @@ export default function ProductsPage() {
                                     rows={2}
                                     placeholder="Optional description"
                                 />
+                            </div>
+
+                            {/* Kondisi Produk */}
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                    Kondisi Produk *
+                                </label>
+                                <select
+                                    value={form.condition}
+                                    onChange={(e) => setForm({ ...form, condition: e.target.value as "NEW" | "USED" | "REFURBISHED" })}
+                                    className="input w-full"
+                                    required
+                                >
+                                    <option value="NEW">Baru</option>
+                                    <option value="USED">Bekas</option>
+                                    <option value="REFURBISHED">Refurbished</option>
+                                </select>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">
