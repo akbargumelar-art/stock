@@ -429,52 +429,60 @@ body {
   }
 
   .print-area {
-    display: block !important;
+    display: flex !important;
     position: fixed;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 50mm;
+    height: 30mm;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
   }
 
   .qr-label {
     page-break-inside: avoid;
-    width: 50mm;
-    height: 30mm;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2mm;
-    border: 0.5px dashed #ccc;
-    margin: 2mm;
+    padding: 1mm;
+    /* Minimal padding, no border for clean print */
+    margin: 0;
   }
 
   .qr-label img {
-    width: 20mm;
-    height: 20mm;
+    width: 18mm;
+    /* Slightly smaller to ensure fit */
+    height: 18mm;
     object-fit: contain;
   }
 
   .qr-label .sku-text {
-    font-size: 7pt;
+    font-size: 8pt;
     font-weight: bold;
     margin-top: 1mm;
     text-align: center;
     font-family: 'Courier New', monospace;
+    line-height: 1.1;
   }
 
   .qr-label .name-text {
-    font-size: 6pt;
+    font-size: 7pt;
     margin-top: 0.5mm;
     text-align: center;
-    max-width: 46mm;
+    max-width: 48mm;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.1;
   }
 
   @page {
-    size: auto;
-    margin: 5mm;
+    size: 50mm 30mm;
+    margin: 0;
   }
 }

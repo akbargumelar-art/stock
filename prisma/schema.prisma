@@ -23,6 +23,12 @@ enum MovementType {
   LOAN_OUT
   LOAN_RETURN
   SALE
+  CONSUME
+}
+
+enum PurchaseSource {
+  ONLINE
+  OFFLINE
 }
 
 enum LoanStatus {
@@ -77,21 +83,27 @@ model CategoryVisibility {
 }
 
 model Product {
-  id           Int      @id @default(autoincrement())
-  sku          String   @unique @db.VarChar(50)
-  name         String   @db.VarChar(255)
-  categoryId   Int      @map("category_id")
-  description  String?  @db.Text
-  unit         String   @default("pcs") @db.VarChar(50)
-  price        Int      @default(0)
-  costPrice    Int      @default(0) @map("cost_price")
-  image        String?  @db.Text
-  minStock     Int      @default(0) @map("min_stock")
-  currentStock Int      @default(0) @map("current_stock")
-  qrCode       String?  @db.Text @map("qr_code")
-  createdBy    String?  @map("created_by")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id              Int             @id @default(autoincrement())
+  sku             String          @unique @db.VarChar(50)
+  name            String          @db.VarChar(255)
+  categoryId      Int             @map("category_id")
+  description     String?         @db.Text
+  unit            String          @default("pcs") @db.VarChar(50)
+  price           Int             @default(0)
+  costPrice       Int             @default(0) @map("cost_price")
+  image           String?         @db.Text
+  minStock        Int             @default(0) @map("min_stock")
+  currentStock    Int             @default(0) @map("current_stock")
+  qrCode          String?         @db.Text @map("qr_code")
+  purchaseDate    DateTime?       @map("purchase_date")
+  purchaseSource  PurchaseSource? @map("purchase_source")
+  purchaseLink    String?         @db.Text @map("purchase_link")
+  storeName       String?         @db.VarChar(255) @map("store_name")
+  storeLocation   String?         @db.VarChar(255) @map("store_location")
+  isConsumable    Boolean         @default(false) @map("is_consumable")
+  createdBy       String?         @map("created_by")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
   category         Category          @relation(fields: [categoryId], references: [id])
   creator          User?             @relation(fields: [createdBy], references: [id])

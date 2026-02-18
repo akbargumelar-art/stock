@@ -102,6 +102,12 @@ export async function createProduct(data: {
     minStock: number;
     currentStock: number;
     image?: string;
+    purchaseDate?: string;
+    purchaseSource?: "ONLINE" | "OFFLINE";
+    purchaseLink?: string;
+    storeName?: string;
+    storeLocation?: string;
+    isConsumable?: boolean;
 }) {
     if (MOCK_ENABLED) {
         return { id: mockProducts.length + 1, ...data, qrCode: null, createdAt: new Date(), updatedAt: new Date() };
@@ -114,10 +120,38 @@ export async function createProduct(data: {
     // Generate QR Code
     const qrCode = await generateQRCode(data.sku);
 
+    // Build conditional purchase source fields
+    const purchaseFields: Record<string, unknown> = {};
+    if (data.purchaseDate) {
+        purchaseFields.purchaseDate = new Date(data.purchaseDate);
+    }
+    if (data.purchaseSource) {
+        purchaseFields.purchaseSource = data.purchaseSource;
+        if (data.purchaseSource === "ONLINE") {
+            purchaseFields.purchaseLink = data.purchaseLink || null;
+            purchaseFields.storeName = null;
+            purchaseFields.storeLocation = null;
+        } else {
+            purchaseFields.storeName = data.storeName || null;
+            purchaseFields.storeLocation = data.storeLocation || null;
+            purchaseFields.purchaseLink = null;
+        }
+    }
+
     const product = await prisma.product.create({
         data: {
-            ...data,
+            sku: data.sku,
+            name: data.name,
+            categoryId: data.categoryId,
+            description: data.description,
+            unit: data.unit,
+            price: data.price || 0,
             costPrice: data.costPrice || 0,
+            minStock: data.minStock,
+            currentStock: data.currentStock,
+            image: data.image,
+            isConsumable: data.isConsumable || false,
+            ...purchaseFields,
             qrCode,
             createdBy: session.user.id,
         },
@@ -149,6 +183,12 @@ export async function updateProduct(
         minStock?: number;
         currentStock?: number;
         image?: string;
+        purchaseDate?: string;
+        purchaseSource?: "ONLINE" | "OFFLINE" | null;
+        purchaseLink?: string;
+        storeName?: string;
+        storeLocation?: string;
+        isConsumable?: boolean;
     }
 ) {
     if (MOCK_ENABLED) return { id, ...data };
@@ -163,10 +203,43 @@ export async function updateProduct(
         qrCode = await generateQRCode(data.sku);
     }
 
+    // Build conditional purchase source fields
+    const purchaseFields: Record<string, unknown> = {};
+    if (data.purchaseDate !== undefined) {
+        purchaseFields.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null;
+    }
+    if (data.purchaseSource !== undefined) {
+        purchaseFields.purchaseSource = data.purchaseSource;
+        if (data.purchaseSource === "ONLINE") {
+            purchaseFields.purchaseLink = data.purchaseLink || null;
+            purchaseFields.storeName = null;
+            purchaseFields.storeLocation = null;
+        } else if (data.purchaseSource === "OFFLINE") {
+            purchaseFields.storeName = data.storeName || null;
+            purchaseFields.storeLocation = data.storeLocation || null;
+            purchaseFields.purchaseLink = null;
+        } else {
+            purchaseFields.purchaseLink = null;
+            purchaseFields.storeName = null;
+            purchaseFields.storeLocation = null;
+        }
+    }
+
     const product = await prisma.product.update({
         where: { id },
         data: {
-            ...data,
+            sku: data.sku,
+            name: data.name,
+            categoryId: data.categoryId,
+            description: data.description,
+            unit: data.unit,
+            price: data.price,
+            costPrice: data.costPrice,
+            minStock: data.minStock,
+            currentStock: data.currentStock,
+            image: data.image,
+            isConsumable: data.isConsumable,
+            ...purchaseFields,
             ...(qrCode ? { qrCode } : {}),
         },
     });

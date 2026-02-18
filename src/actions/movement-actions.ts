@@ -135,3 +135,60 @@ export async function getMovements(filters?: {
         take: 100,
     });
 }
+
+export async function consumeProduct(data: {
+    productId: number;
+    quantity: number;
+    notes?: string;
+}) {
+    if (MOCK_ENABLED) return { id: 999, ...data, type: "CONSUME", createdAt: new Date() };
+
+    const session = await auth();
+    if (!session?.user || session.user.role !== "ADMIN")
+        throw new Error("Unauthorized");
+
+    // Validate product is consumable
+    const product = await prisma.product.findUnique({
+        where: { id: data.productId },
+        select: { isConsumable: true, currentStock: true, sku: true, name: true },
+    });
+
+    if (!product) throw new Error("Product not found");
+    if (!product.isConsumable) throw new Error("Product is not consumable");
+    if (product.currentStock < data.quantity) throw new Error("Insufficient stock");
+
+    // Create movement record
+    const movement = await prisma.movement.create({
+        data: {
+            productId: data.productId,
+            type: "CONSUME",
+            quantity: data.quantity,
+            notes: data.notes || `Consumed ${data.quantity} unit(s)`,
+            movedBy: session.user.id,
+        },
+    });
+
+    // Decrement stock
+    await prisma.product.update({
+        where: { id: data.productId },
+        data: { currentStock: { decrement: data.quantity } },
+    });
+
+    await logAudit({
+        userId: session.user.id,
+        action: "CONSUME",
+        entityType: "product",
+        entityId: String(data.productId),
+        details: {
+            sku: product.sku,
+            name: product.name,
+            quantity: data.quantity,
+        },
+    });
+
+    revalidatePath("/dashboard/products");
+    revalidatePath(`/dashboard/products/${data.productId}`);
+    revalidatePath("/dashboard/movements");
+    revalidatePath("/dashboard");
+    return movement;
+}

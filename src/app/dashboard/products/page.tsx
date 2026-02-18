@@ -30,6 +30,13 @@ import {
     ImageIcon,
     Package,
     Camera,
+    Droplets,
+    ShoppingCart,
+    Store,
+    Globe,
+    Link as LinkIcon,
+    MapPin,
+    Calendar,
 } from "lucide-react";
 
 // Update interface to include image
@@ -46,6 +53,12 @@ interface ProductWithCategory {
     currentStock: number;
     qrCode: string | null;
     image: string | null;
+    purchaseDate: string | null;
+    purchaseSource: "ONLINE" | "OFFLINE" | null;
+    purchaseLink: string | null;
+    storeName: string | null;
+    storeLocation: string | null;
+    isConsumable: boolean;
     category: {
         id: number;
         name: string;
@@ -77,6 +90,12 @@ export default function ProductsPage() {
         minStock: 5,
         currentStock: 0,
         image: "",
+        purchaseDate: "",
+        purchaseSource: "" as "" | "ONLINE" | "OFFLINE",
+        purchaseLink: "",
+        storeName: "",
+        storeLocation: "",
+        isConsumable: false,
     });
 
     // Auto-SKU state
@@ -113,11 +132,20 @@ export default function ProductsPage() {
         e.preventDefault();
         setSaving(true);
         try {
+            // Convert empty purchaseSource to undefined
+            const submitData = {
+                ...form,
+                purchaseSource: form.purchaseSource || undefined,
+                purchaseDate: form.purchaseDate || undefined,
+                purchaseLink: form.purchaseLink || undefined,
+                storeName: form.storeName || undefined,
+                storeLocation: form.storeLocation || undefined,
+            };
             if (editProduct) {
-                await updateProduct(editProduct.id, form);
+                await updateProduct(editProduct.id, submitData);
                 toast.success("Product updated successfully");
             } else {
-                await createProduct(form);
+                await createProduct(submitData as Parameters<typeof createProduct>[0]);
                 toast.success("Product created successfully");
             }
             setShowModal(false);
@@ -158,6 +186,12 @@ export default function ProductsPage() {
             minStock: product.minStock,
             currentStock: product.currentStock,
             image: product.image || "",
+            purchaseDate: product.purchaseDate ? new Date(product.purchaseDate).toISOString().split("T")[0] : "",
+            purchaseSource: product.purchaseSource || "",
+            purchaseLink: product.purchaseLink || "",
+            storeName: product.storeName || "",
+            storeLocation: product.storeLocation || "",
+            isConsumable: product.isConsumable || false,
         });
         setShowModal(true);
     };
@@ -174,6 +208,12 @@ export default function ProductsPage() {
             minStock: 5,
             currentStock: 0,
             image: "",
+            purchaseDate: "",
+            purchaseSource: "",
+            purchaseLink: "",
+            storeName: "",
+            storeLocation: "",
+            isConsumable: false,
         });
         setIsAutoSKU(true);
     };
@@ -420,6 +460,9 @@ export default function ProductsPage() {
                                                         <div>
                                                             <Link href={`/dashboard/products/${product.id}`} className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] hover:underline block">
                                                                 {product.name}
+                                                                {product.isConsumable && (
+                                                                    <span title="Produk Konsumtif"><Droplets size={12} className="inline ml-1.5 text-purple-500" /></span>
+                                                                )}
                                                             </Link>
                                                             {product.description && (
                                                                 <p className="text-xs text-[var(--text-secondary)] truncate max-w-[150px]">
@@ -723,6 +766,130 @@ export default function ProductsPage() {
                                         className="input"
                                         min={0}
                                     />
+                                </div>
+                            </div>
+
+                            {/* Separator */}
+                            <div className="border-t border-[var(--border-color)] pt-4 mt-2">
+                                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                                    <ShoppingCart size={16} className="text-[var(--accent)]" />
+                                    Informasi Pembelian
+                                </h3>
+
+                                {/* Purchase Date */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1 flex items-center gap-1.5">
+                                        <Calendar size={14} />
+                                        Tanggal Beli
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={form.purchaseDate}
+                                        onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
+                                        className="input w-full"
+                                    />
+                                </div>
+
+                                {/* Purchase Source */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                                        Tempat Beli
+                                    </label>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setForm({ ...form, purchaseSource: "ONLINE", storeName: "", storeLocation: "" })}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 transition-all text-sm font-medium ${form.purchaseSource === "ONLINE"
+                                                ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                                                : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
+                                                }`}
+                                        >
+                                            <Globe size={16} />
+                                            Online
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setForm({ ...form, purchaseSource: "OFFLINE", purchaseLink: "" })}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border-2 transition-all text-sm font-medium ${form.purchaseSource === "OFFLINE"
+                                                ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                                                : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
+                                                }`}
+                                        >
+                                            <Store size={16} />
+                                            Offline
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Online Fields */}
+                                {form.purchaseSource === "ONLINE" && (
+                                    <div className="mb-4 animate-fade-in">
+                                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1 flex items-center gap-1.5">
+                                            <LinkIcon size={14} />
+                                            Link Pembelian (Marketplace)
+                                        </label>
+                                        <input
+                                            type="url"
+                                            value={form.purchaseLink}
+                                            onChange={(e) => setForm({ ...form, purchaseLink: e.target.value })}
+                                            className="input w-full"
+                                            placeholder="https://tokopedia.link/..."
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Offline Fields */}
+                                {form.purchaseSource === "OFFLINE" && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 animate-fade-in">
+                                        <div>
+                                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1 flex items-center gap-1.5">
+                                                <Store size={14} />
+                                                Nama Toko
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={form.storeName}
+                                                onChange={(e) => setForm({ ...form, storeName: e.target.value })}
+                                                className="input w-full"
+                                                placeholder="Nama toko"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1 flex items-center gap-1.5">
+                                                <MapPin size={14} />
+                                                Lokasi Toko
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={form.storeLocation}
+                                                onChange={(e) => setForm({ ...form, storeLocation: e.target.value })}
+                                                className="input w-full"
+                                                placeholder="Alamat/lokasi toko"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Consumable toggle */}
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)]">
+                                <button
+                                    type="button"
+                                    onClick={() => setForm({ ...form, isConsumable: !form.isConsumable })}
+                                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${form.isConsumable ? "bg-[var(--accent)]" : "bg-gray-300 dark:bg-gray-600"
+                                        }`}
+                                >
+                                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${form.isConsumable ? "translate-x-5" : ""
+                                        }`} />
+                                </button>
+                                <div>
+                                    <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+                                        <Droplets size={14} className={form.isConsumable ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                                        Produk Konsumtif (Habis Pakai)
+                                    </div>
+                                    <p className="text-xs text-[var(--text-muted)]">
+                                        Aktifkan jika produk ini akan berkurang saat digunakan
+                                    </p>
                                 </div>
                             </div>
 
