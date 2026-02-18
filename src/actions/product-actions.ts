@@ -286,9 +286,6 @@ export async function deleteProduct(id: number) {
 export async function getCategories() {
     if (MOCK_ENABLED) return mockCategories;
 
-    const session = await auth();
-    if (!session?.user) return [];
-
     return prisma.category.findMany({
         select: {
             id: true,

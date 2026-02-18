@@ -108,13 +108,9 @@ export default function ProductsPage() {
     const [printProduct, setPrintProduct] = useState<ProductWithCategory | null>(null);
     const printRef = useRef<HTMLDivElement>(null);
 
-    const { status: sessionStatus } = useSession();
-
     useEffect(() => {
-        if (sessionStatus === "authenticated") {
-            loadData();
-        }
-    }, [sessionStatus]);
+        loadData();
+    }, []);
 
     const loadData = async () => {
         try {

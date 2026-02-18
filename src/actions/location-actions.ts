@@ -9,9 +9,6 @@ import { MOCK_ENABLED, mockLocations } from "@/lib/mock-data";
 export async function getLocations() {
     if (MOCK_ENABLED) return mockLocations;
 
-    const session = await auth();
-    if (!session?.user) return [];
-
     return prisma.location.findMany({
         include: {
             parent: { select: { name: true } },
