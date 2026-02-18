@@ -31,12 +31,6 @@ enum PurchaseSource {
   OFFLINE
 }
 
-enum ProductCondition {
-  NEW
-  USED
-  REFURBISHED
-}
-
 enum LoanStatus {
   ACTIVE
   RETURNED
@@ -106,7 +100,7 @@ model Product {
   purchaseLink    String?         @db.Text @map("purchase_link")
   storeName       String?         @db.VarChar(255) @map("store_name")
   storeLocation   String?         @db.VarChar(255) @map("store_location")
-  condition       ProductCondition @default(NEW) @map("condition")
+  condition       String?         @map("condition")
   isConsumable    Boolean         @default(false) @map("is_consumable")
   createdBy       String?         @map("created_by")
   createdAt       DateTime        @default(now()) @map("created_at")

@@ -38,7 +38,7 @@ interface ProductDetail {
     storeName: string | null;
     storeLocation: string | null;
     isConsumable: boolean;
-    condition: "NEW" | "USED" | "REFURBISHED";
+    condition: string | null;
     category: { name: string };
     productLocations: ProductLocation[];
 }
@@ -294,22 +294,8 @@ export default function ProductDetailPage() {
                         </div>
                         <div className="p-3 bg-[var(--bg-tertiary)] rounded-lg">
                             <div className="text-xs text-[var(--text-muted)] uppercase">Kondisi Produk</div>
-                            <div className="mt-1">
-                                {product.condition === "NEW" && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                        Baru
-                                    </span>
-                                )}
-                                {product.condition === "USED" && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                        Bekas
-                                    </span>
-                                )}
-                                {product.condition === "REFURBISHED" && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                        Refurbished
-                                    </span>
-                                )}
+                            <div className="text-lg font-semibold text-[var(--text-primary)] mt-1">
+                                {product.condition || "—"}
                             </div>
                         </div>
                     </div>

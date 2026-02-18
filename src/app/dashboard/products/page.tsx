@@ -59,7 +59,7 @@ interface ProductWithCategory {
     storeName: string | null;
     storeLocation: string | null;
     isConsumable: boolean;
-    condition: "NEW" | "USED" | "REFURBISHED";
+    condition: string | null;
     category: {
         id: number;
         name: string;
@@ -97,7 +97,7 @@ export default function ProductsPage() {
         storeName: "",
         storeLocation: "",
         isConsumable: false,
-        condition: "NEW" as "NEW" | "USED" | "REFURBISHED",
+        condition: "" as string,
     });
 
     // Auto-SKU state
@@ -108,9 +108,13 @@ export default function ProductsPage() {
     const [printProduct, setPrintProduct] = useState<ProductWithCategory | null>(null);
     const printRef = useRef<HTMLDivElement>(null);
 
+    const { status: sessionStatus } = useSession();
+
     useEffect(() => {
-        loadData();
-    }, []);
+        if (sessionStatus === "authenticated") {
+            loadData();
+        }
+    }, [sessionStatus]);
 
     const loadData = async () => {
         try {
@@ -193,7 +197,7 @@ export default function ProductsPage() {
             storeName: product.storeName || "",
             storeLocation: product.storeLocation || "",
             isConsumable: product.isConsumable || false,
-            condition: product.condition || "NEW",
+            condition: product.condition || "",
         });
         setShowModal(true);
     };
@@ -216,7 +220,7 @@ export default function ProductsPage() {
             storeName: "",
             storeLocation: "",
             isConsumable: false,
-            condition: "NEW",
+            condition: "",
         });
         setIsAutoSKU(true);
     };
@@ -494,20 +498,12 @@ export default function ProductsPage() {
                                                     </span>
                                                 </td>
                                                 <td className="py-3 px-4 hidden md:table-cell">
-                                                    {product.condition === "NEW" && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                            Baru
+                                                    {product.condition ? (
+                                                        <span className="text-xs text-[var(--text-secondary)]">
+                                                            {product.condition}
                                                         </span>
-                                                    )}
-                                                    {product.condition === "USED" && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                            Bekas
-                                                        </span>
-                                                    )}
-                                                    {product.condition === "REFURBISHED" && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                            Refurbished
-                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-[var(--text-muted)]">—</span>
                                                     )}
                                                 </td>
                                                 <td className="py-3 px-4 hidden md:table-cell">
@@ -739,18 +735,15 @@ export default function ProductsPage() {
                             {/* Kondisi Produk */}
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Kondisi Produk *
+                                    Kondisi Produk
                                 </label>
-                                <select
+                                <input
+                                    type="text"
                                     value={form.condition}
-                                    onChange={(e) => setForm({ ...form, condition: e.target.value as "NEW" | "USED" | "REFURBISHED" })}
+                                    onChange={(e) => setForm({ ...form, condition: e.target.value })}
                                     className="input w-full"
-                                    required
-                                >
-                                    <option value="NEW">Baru</option>
-                                    <option value="USED">Bekas</option>
-                                    <option value="REFURBISHED">Refurbished</option>
-                                </select>
+                                    placeholder="Contoh: Baru, Bekas, Refurbished, dll"
+                                />
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">

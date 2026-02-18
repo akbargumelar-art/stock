@@ -108,7 +108,7 @@ export async function createProduct(data: {
     storeName?: string;
     storeLocation?: string;
     isConsumable?: boolean;
-    condition?: "NEW" | "USED" | "REFURBISHED";
+    condition?: string;
 }) {
     if (MOCK_ENABLED) {
         return { id: mockProducts.length + 1, ...data, qrCode: null, createdAt: new Date(), updatedAt: new Date() };
@@ -191,7 +191,7 @@ export async function updateProduct(
         storeName?: string;
         storeLocation?: string;
         isConsumable?: boolean;
-        condition?: "NEW" | "USED" | "REFURBISHED";
+        condition?: string;
     }
 ) {
     if (MOCK_ENABLED) return { id, ...data };
