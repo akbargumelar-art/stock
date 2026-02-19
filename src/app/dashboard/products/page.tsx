@@ -12,6 +12,7 @@ import {
     getCategories,
     generateNextSKU,
 } from "@/actions/product-actions";
+import { getLocations } from "@/actions/location-actions";
 import { createCategory } from "@/actions/category-actions";
 import {
     Plus,
@@ -72,6 +73,7 @@ export default function ProductsPage() {
 
     const [products, setProducts] = useState<ProductWithCategory[]>([]);
     const [categories, setCategories] = useState<{ id: number; name: string; parentId?: number | null; parent?: { id: number; name: string } | null }[]>([]);
+    const [locations, setLocations] = useState<{ id: number; name: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [filterCategory, setFilterCategory] = useState("all");
@@ -98,6 +100,7 @@ export default function ProductsPage() {
         storeLocation: "",
         isConsumable: false,
         condition: "" as string,
+        locationId: 0,
     });
 
     // Auto-SKU state
@@ -119,6 +122,14 @@ export default function ProductsPage() {
             setCategories(fetchedCategories);
         } catch (error) {
             console.error("Failed to load categories:", error);
+        }
+
+        // Load locations
+        try {
+            const fetchedLocations = await getLocations();
+            setLocations(fetchedLocations);
+        } catch (error) {
+            console.error("Failed to load locations:", error);
         }
 
         // Load products separately
@@ -146,6 +157,7 @@ export default function ProductsPage() {
                 purchaseLink: form.purchaseLink || undefined,
                 storeName: form.storeName || undefined,
                 storeLocation: form.storeLocation || undefined,
+                locationId: form.locationId || undefined,
             };
             if (editProduct) {
                 await updateProduct(editProduct.id, submitData);
@@ -199,6 +211,7 @@ export default function ProductsPage() {
             storeLocation: product.storeLocation || "",
             isConsumable: product.isConsumable || false,
             condition: product.condition || "",
+            locationId: 0,
         });
         setShowModal(true);
     };
@@ -222,6 +235,7 @@ export default function ProductsPage() {
             storeLocation: "",
             isConsumable: false,
             condition: "",
+            locationId: 0,
         });
         setIsAutoSKU(true);
     };
@@ -801,6 +815,31 @@ export default function ProductsPage() {
                                 </div>
                             </div>
 
+                            {/* Location Selection (Only for new products) */}
+                            {!editProduct && form.currentStock > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Initial Storage Location
+                                    </label>
+                                    <select
+                                        value={form.locationId}
+                                        onChange={(e) => setForm({ ...form, locationId: Number(e.target.value) })}
+                                        className="input"
+                                        required={form.currentStock > 0}
+                                    >
+                                        <option value={0}>Select Location...</option>
+                                        {locations.map(loc => (
+                                            <option key={loc.id} value={loc.id}>
+                                                {loc.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-[var(--text-muted)] mt-1">
+                                        Select where this initial stock is stored.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Separator */}
                             <div className="border-t border-[var(--border-color)] pt-4 mt-2">
                                 <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
@@ -943,23 +982,26 @@ export default function ProductsPage() {
                             </div>
                         </form>
                     </div>
-                </div>
-            )}
+                </div >
+            )
+            }
 
 
 
             {/* Print Area (hidden, used for printing) */}
-            {printProduct && (
-                <div ref={printRef} className="print-area">
-                    <div className="qr-label">
-                        {printProduct.qrCode && (
-                            <img src={printProduct.qrCode} alt={`QR: ${printProduct.sku}`} />
-                        )}
-                        <div className="sku-text">{printProduct.sku}</div>
-                        <div className="name-text">{printProduct.name}</div>
+            {
+                printProduct && (
+                    <div ref={printRef} className="print-area">
+                        <div className="qr-label">
+                            {printProduct.qrCode && (
+                                <img src={printProduct.qrCode} alt={`QR: ${printProduct.sku}`} />
+                            )}
+                            <div className="sku-text">{printProduct.sku}</div>
+                            <div className="name-text">{printProduct.name}</div>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

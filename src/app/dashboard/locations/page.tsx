@@ -8,6 +8,7 @@ import {
     updateLocation,
     deleteLocation,
 } from "@/actions/location-actions";
+import { getProducts } from "@/actions/product-actions";
 import {
     MapPin,
     Plus,
@@ -17,6 +18,8 @@ import {
     Warehouse,
     Cloud,
     ChevronRight,
+    Package,
+    Eye,
 } from "lucide-react";
 
 interface LocationItem {
@@ -48,6 +51,11 @@ export default function LocationsPage() {
         parentId: null as number | null,
         description: "",
     });
+
+    const [viewLocation, setViewLocation] = useState<LocationItem | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [locationProducts, setLocationProducts] = useState<any[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(false);
 
     const fetchLocations = async () => {
         setLoading(true);
@@ -155,8 +163,8 @@ export default function LocationsPage() {
                 <button
                     onClick={() => setActiveTab("PHYSICAL")}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "PHYSICAL"
-                            ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                        ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                         }`}
                 >
                     <Warehouse size={16} />
@@ -165,8 +173,8 @@ export default function LocationsPage() {
                 <button
                     onClick={() => setActiveTab("VIRTUAL")}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "VIRTUAL"
-                            ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                        ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                         }`}
                 >
                     <Cloud size={16} />
@@ -189,13 +197,28 @@ export default function LocationsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {rootLocations.map((loc) => (
-                        <div key={loc.id} className="card-neu p-5 space-y-3">
+                        <div
+                            key={loc.id}
+                            className="card-neu p-5 space-y-3 cursor-pointer group hover:border-[var(--accent)] transition-all"
+                            onClick={async () => {
+                                setViewLocation(loc);
+                                setLoadingProducts(true);
+                                try {
+                                    const products = await getProducts({ locationId: loc.id });
+                                    setLocationProducts(products as any[]);
+                                } catch (err) {
+                                    console.error(err);
+                                } finally {
+                                    setLoadingProducts(false);
+                                }
+                            }}
+                        >
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div
                                         className={`w-10 h-10 rounded-lg flex items-center justify-center ${loc.type === "PHYSICAL"
-                                                ? "bg-blue-500/10 text-blue-500"
-                                                : "bg-purple-500/10 text-purple-500"
+                                            ? "bg-blue-500/10 text-blue-500"
+                                            : "bg-purple-500/10 text-purple-500"
                                             }`}
                                     >
                                         {loc.type === "PHYSICAL" ? (
@@ -213,22 +236,43 @@ export default function LocationsPage() {
                                         </p>
                                     </div>
                                 </div>
-                                {isAdmin && (
-                                    <div className="flex gap-1">
-                                        <button
-                                            onClick={() => openEdit(loc)}
-                                            className="btn btn-ghost p-1.5"
-                                        >
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(loc.id)}
-                                            className="btn btn-ghost p-1.5 text-red-500"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            setViewLocation(loc);
+                                            setLoadingProducts(true);
+                                            try {
+                                                const products = await getProducts({ locationId: loc.id });
+                                                setLocationProducts(products as any[]);
+                                            } catch (err) {
+                                                console.error(err);
+                                            } finally {
+                                                setLoadingProducts(false);
+                                            }
+                                        }}
+                                        className="btn btn-secondary p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="View Contents"
+                                    >
+                                        <Eye size={14} />
+                                    </button>
+                                    {isAdmin && (
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => openEdit(loc)}
+                                                className="btn btn-ghost p-1.5"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(loc.id)}
+                                                className="btn btn-ghost p-1.5 text-red-500"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {loc.description && (
@@ -259,28 +303,120 @@ export default function LocationsPage() {
                                                         ({child._count.productLocations})
                                                     </span>
                                                 </div>
-                                                {isAdmin && (
-                                                    <div className="flex gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex gap-1 ml-auto">
                                                         <button
-                                                            onClick={() => openEdit(child)}
-                                                            className="btn btn-ghost p-1"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                setViewLocation(child);
+                                                                setLoadingProducts(true);
+                                                                try {
+                                                                    const products = await getProducts({ locationId: child.id });
+                                                                    setLocationProducts(products as any[]);
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                } finally {
+                                                                    setLoadingProducts(false);
+                                                                }
+                                                            }}
+                                                            className="btn btn-ghost p-1 hover:text-[var(--accent)]"
+                                                            title="View Contents"
                                                         >
-                                                            <Edit2 size={12} />
+                                                            <Eye size={12} />
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDelete(child.id)}
-                                                            className="btn btn-ghost p-1 text-red-500"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
+                                                        {isAdmin && (
+                                                            <div className="flex gap-1">
+                                                                <button
+                                                                    onClick={() => openEdit(child)}
+                                                                    className="btn btn-ghost p-1"
+                                                                >
+                                                                    <Edit2 size={12} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDelete(child.id)}
+                                                                    className="btn btn-ghost p-1 text-red-500"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         ))}
                                 </div>
                             )}
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* View Location Products Modal */}
+            {viewLocation && (
+                <div className="modal-overlay" onClick={() => setViewLocation(null)}>
+                    <div
+                        className="modal-content animate-slide-up p-6 max-w-2xl max-h-[80vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                                <Warehouse size={20} className="text-[var(--accent)]" />
+                                {viewLocation.name}
+                                <span className="text-sm font-normal text-[var(--text-muted)]">
+                                    ({viewLocation.type})
+                                </span>
+                            </h2>
+                            <button
+                                onClick={() => setViewLocation(null)}
+                                className="btn btn-ghost p-1"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {loadingProducts ? (
+                            <div className="flex justify-center p-8">
+                                <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : locationProducts.length === 0 ? (
+                            <div className="text-center p-8 text-[var(--text-muted)]">
+                                <Package size={32} className="mx-auto mb-2 opacity-50" />
+                                <p>No products found in this location.</p>
+                            </div>
+                        ) : (
+                            <table className="w-full text-left">
+                                <thead className="text-xs uppercase text-[var(--text-secondary)] bg-[var(--bg-secondary)]">
+                                    <tr>
+                                        <th className="p-3">SKU</th>
+                                        <th className="p-3">Product Name</th>
+                                        <th className="p-3">Stock in Location</th>
+                                        <th className="p-3">Global Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm">
+                                    {locationProducts.map((p) => {
+                                        // Find the specific location entry to get quantity
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        const locEntry = p.productLocations?.find((pl: any) => pl.locationId === viewLocation.id);
+                                        const qty = locEntry ? locEntry.quantity : 0;
+
+                                        return (
+                                            <tr key={p.id} className="border-b border-[var(--border-color)]">
+                                                <td className="p-3 font-mono">{p.sku}</td>
+                                                <td className="p-3 font-medium">{p.name}</td>
+                                                <td className="p-3 font-bold text-[var(--accent)]">
+                                                    {qty} <span className="text-xs font-normal text-[var(--text-muted)]">{p.unit}</span>
+                                                </td>
+                                                <td className="p-3 text-[var(--text-secondary)]">
+                                                    {p.currentStock} {p.unit}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
                 </div>
             )}
 

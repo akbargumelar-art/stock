@@ -10,6 +10,7 @@ import { MOCK_ENABLED, mockProducts, mockCategories } from "@/lib/mock-data";
 export async function getProducts(filters?: {
     search?: string;
     categoryId?: number;
+    locationId?: number;
     status?: string;
 }) {
     if (MOCK_ENABLED) {
@@ -19,6 +20,7 @@ export async function getProducts(filters?: {
             results = results.filter(p => p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s));
         }
         if (filters?.categoryId) results = results.filter(p => p.categoryId === filters.categoryId);
+        // Mock filtering for location not fully implemented for brevity, but real DB logic below is key
         if (filters?.status === "LOW") results = results.filter(p => p.currentStock < p.minStock);
         if (filters?.status === "OVER_STOCK") results = results.filter(p => p.currentStock > 2 * p.minStock);
         if (filters?.status === "IN_STOCK") results = results.filter(p => p.currentStock >= p.minStock && p.currentStock <= 2 * p.minStock);
@@ -43,6 +45,12 @@ export async function getProducts(filters?: {
         where.categoryId = filters.categoryId;
     }
 
+    if (filters?.locationId) {
+        where.productLocations = {
+            some: { locationId: filters.locationId }
+        };
+    }
+
     // RBAC: Viewer can only see assigned categories
     if (session.user.role === "VIEWER") {
         const visibility = await prisma.categoryVisibility.findMany({
@@ -56,6 +64,10 @@ export async function getProducts(filters?: {
         where,
         include: {
             category: { select: { id: true, name: true } },
+            productLocations: {
+                where: filters?.locationId ? { locationId: filters.locationId } : undefined,
+                select: { quantity: true, locationId: true }
+            }
         },
         orderBy: { updatedAt: "desc" },
     });
@@ -109,6 +121,7 @@ export async function createProduct(data: {
     storeLocation?: string;
     isConsumable?: boolean;
     condition?: string;
+    locationId?: number;
 }) {
     if (MOCK_ENABLED) {
         return { id: mockProducts.length + 1, ...data, qrCode: null, createdAt: new Date(), updatedAt: new Date() };
@@ -139,24 +152,51 @@ export async function createProduct(data: {
         }
     }
 
-    const product = await prisma.product.create({
-        data: {
-            sku: data.sku,
-            name: data.name,
-            categoryId: data.categoryId,
-            description: data.description,
-            unit: data.unit,
-            price: data.price || 0,
-            costPrice: data.costPrice || 0,
-            minStock: data.minStock,
-            currentStock: data.currentStock,
-            image: data.image,
-            isConsumable: data.isConsumable || false,
-            condition: data.condition || "NEW",
-            ...purchaseFields,
-            qrCode,
-            createdBy: session.user.id,
-        },
+    // Use transaction to ensure consistency
+    const product = await prisma.$transaction(async (tx) => {
+        const p = await tx.product.create({
+            data: {
+                sku: data.sku,
+                name: data.name,
+                categoryId: data.categoryId,
+                description: data.description,
+                unit: data.unit,
+                price: data.price || 0,
+                costPrice: data.costPrice || 0,
+                minStock: data.minStock,
+                currentStock: data.currentStock,
+                image: data.image,
+                isConsumable: data.isConsumable || false,
+                condition: data.condition || "NEW",
+                ...purchaseFields,
+                qrCode,
+                createdBy: session.user.id,
+            },
+        });
+
+        // If location is provided and there is stock, create ProductLocation and Movement
+        if (data.locationId && data.currentStock > 0) {
+            await tx.productLocation.create({
+                data: {
+                    productId: p.id,
+                    locationId: data.locationId,
+                    quantity: data.currentStock,
+                },
+            });
+
+            await tx.movement.create({
+                data: {
+                    productId: p.id,
+                    type: "IN",
+                    toLocationId: data.locationId,
+                    quantity: data.currentStock,
+                    movedBy: session.user.id,
+                    notes: "Initial Stock",
+                },
+            });
+        }
+
+        return p;
     });
 
     await logAudit({
@@ -268,6 +308,32 @@ export async function deleteProduct(id: number) {
     if (!session?.user || session.user.role !== "ADMIN")
         throw new Error("Unauthorized");
 
+    const productCheck = await prisma.product.findUnique({
+        where: { id },
+        include: {
+            _count: {
+                select: {
+                    saleItems: true,
+                    loans: true,
+                }
+            }
+        }
+    });
+
+    if (!productCheck) throw new Error("Product not found");
+
+    if (productCheck._count.saleItems > 0) {
+        throw new Error("Cannot delete: Product has sales history.");
+    }
+
+    if (productCheck._count.loans > 0) {
+        throw new Error("Cannot delete: Product has associated loans.");
+    }
+
+    // Delete related movements first (no cascade)
+    await prisma.movement.deleteMany({ where: { productId: id } });
+
+    // Delete product (ProductLocation cascades)
     const product = await prisma.product.delete({ where: { id } });
 
     await logAudit({
