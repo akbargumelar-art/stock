@@ -138,6 +138,7 @@ export async function getMovements(filters?: {
 
 export async function consumeProduct(data: {
     productId: number;
+    locationId: number;
     quantity: number;
     notes?: string;
 }) {
@@ -155,12 +156,26 @@ export async function consumeProduct(data: {
 
     if (!product) throw new Error("Product not found");
     if (!product.isConsumable) throw new Error("Product is not consumable");
-    if (product.currentStock < data.quantity) throw new Error("Insufficient stock");
+
+    // Check location stock
+    const productLocation = await prisma.productLocation.findUnique({
+        where: {
+            productId_locationId: {
+                productId: data.productId,
+                locationId: data.locationId,
+            },
+        },
+    });
+
+    if (!productLocation || productLocation.quantity < data.quantity) {
+        throw new Error("Insufficient stock in selected location");
+    }
 
     // Create movement record
     const movement = await prisma.movement.create({
         data: {
             productId: data.productId,
+            fromLocationId: data.locationId,
             type: "CONSUME",
             quantity: data.quantity,
             notes: data.notes || `Consumed ${data.quantity} unit(s)`,
@@ -168,7 +183,18 @@ export async function consumeProduct(data: {
         },
     });
 
-    // Decrement stock
+    // Decrement location stock
+    await prisma.productLocation.update({
+        where: {
+            productId_locationId: {
+                productId: data.productId,
+                locationId: data.locationId,
+            },
+        },
+        data: { quantity: { decrement: data.quantity } },
+    });
+
+    // Decrement total stock
     await prisma.product.update({
         where: { id: data.productId },
         data: { currentStock: { decrement: data.quantity } },
@@ -182,6 +208,7 @@ export async function consumeProduct(data: {
         details: {
             sku: product.sku,
             name: product.name,
+            locationId: data.locationId,
             quantity: data.quantity,
         },
     });

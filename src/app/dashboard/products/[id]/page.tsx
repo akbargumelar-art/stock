@@ -72,6 +72,7 @@ export default function ProductDetailPage() {
     // Consume modal
     const [showConsumeModal, setShowConsumeModal] = useState(false);
     const [consumeQty, setConsumeQty] = useState(1);
+    const [consumeLocationId, setConsumeLocationId] = useState<number | "">("");
     const [consumeNotes, setConsumeNotes] = useState("");
     const [consuming, setConsuming] = useState(false);
 
@@ -118,17 +119,19 @@ export default function ProductDetailPage() {
 
     const handleConsume = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!product) return;
+        if (!product || !consumeLocationId) return;
         setConsuming(true);
         try {
             await consumeProduct({
                 productId: product.id,
+                locationId: Number(consumeLocationId),
                 quantity: consumeQty,
                 notes: consumeNotes || undefined,
             });
             toast.success(`Berhasil menggunakan ${consumeQty} ${product.unit}`);
             setShowConsumeModal(false);
             setConsumeQty(1);
+            setConsumeLocationId("");
             setConsumeNotes("");
             setLoading(true);
             await fetchData();
@@ -537,6 +540,30 @@ export default function ProductDetailPage() {
                         <form onSubmit={handleConsume} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                    Dari Lokasi *
+                                </label>
+                                <select
+                                    value={consumeLocationId}
+                                    onChange={(e) => {
+                                        setConsumeLocationId(Number(e.target.value));
+                                        setConsumeQty(1); // Reset qty when location changes
+                                    }}
+                                    className="input w-full"
+                                    required
+                                >
+                                    <option value="" disabled>Pilih Lokasi</option>
+                                    {product.productLocations
+                                        .filter(pl => pl.quantity > 0)
+                                        .map(pl => (
+                                            <option key={pl.locationId} value={pl.locationId}>
+                                                {pl.location.name} ({pl.quantity} {product.unit})
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                                     Jumlah yang digunakan *
                                 </label>
                                 <input
@@ -545,7 +572,12 @@ export default function ProductDetailPage() {
                                     onChange={(e) => setConsumeQty(Number(e.target.value))}
                                     className="input w-full"
                                     min={1}
-                                    max={product.currentStock}
+                                    max={
+                                        consumeLocationId
+                                            ? product.productLocations.find(pl => pl.locationId === consumeLocationId)?.quantity || 0
+                                            : 0
+                                    }
+                                    disabled={!consumeLocationId}
                                     required
                                 />
                             </div>
@@ -565,7 +597,11 @@ export default function ProductDetailPage() {
                                 <button type="button" onClick={() => setShowConsumeModal(false)} className="btn btn-secondary flex-1">
                                     Batal
                                 </button>
-                                <button type="submit" disabled={consuming} className="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700">
+                                <button
+                                    type="submit"
+                                    disabled={consuming || !consumeLocationId}
+                                    className="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700"
+                                >
                                     {consuming ? "Memproses..." : "Gunakan"}
                                 </button>
                             </div>
