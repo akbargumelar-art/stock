@@ -29,6 +29,7 @@ interface Product {
     id: number;
     sku: string;
     name: string;
+    productLocations: { locationId: number; quantity: number }[];
 }
 
 interface Location {
@@ -207,11 +208,22 @@ export default function MovementsPage() {
                                     className="input"
                                 >
                                     <option value="">— None (Incoming) —</option>
-                                    {locations.map((l) => (
-                                        <option key={l.id} value={l.id}>
-                                            [{l.type}] {l.name}
-                                        </option>
-                                    ))}
+                                    {locations.map((l) => {
+                                        // If product is selected, only show locations where it exists
+                                        if (form.productId) {
+                                            const product = products.find(p => p.id === form.productId);
+                                            const hasStock = product?.productLocations?.some(pl => pl.locationId === l.id && pl.quantity > 0);
+
+                                            // Show if it has stock OR if it's currently selected (to avoid hidden values)
+                                            if (!hasStock && form.fromLocationId !== l.id) return null;
+                                        }
+
+                                        return (
+                                            <option key={l.id} value={l.id}>
+                                                [{l.type}] {l.name}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
                             <div>
