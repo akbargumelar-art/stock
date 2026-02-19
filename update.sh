@@ -30,6 +30,6 @@ npm run build
 
 # 6. Restart PM2
 echo "🔄 Restarting application..."
-pm2 restart stock-app
+pm2 restart stockflow
 
 echo "✅ Update complete!"

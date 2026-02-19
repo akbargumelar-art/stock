@@ -816,7 +816,7 @@ export default function ProductsPage() {
                             </div>
 
                             {/* Location Selection (Only for new products) */}
-                            {!editProduct && form.currentStock > 0 && (
+                            {!editProduct && (
                                 <div>
                                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                                         Initial Storage Location
@@ -825,6 +825,7 @@ export default function ProductsPage() {
                                         value={form.locationId}
                                         onChange={(e) => setForm({ ...form, locationId: Number(e.target.value) })}
                                         className="input"
+                                        // Required if stock > 0, otherwise optional but recommended
                                         required={form.currentStock > 0}
                                     >
                                         <option value={0}>Select Location...</option>
@@ -835,7 +836,7 @@ export default function ProductsPage() {
                                         ))}
                                     </select>
                                     <p className="text-xs text-[var(--text-muted)] mt-1">
-                                        Select where this initial stock is stored.
+                                        Select where this product is stored. {form.currentStock === 0 && "Stock will be initialized at 0 in this location."}
                                     </p>
                                 </div>
                             )}

@@ -174,8 +174,8 @@ export async function createProduct(data: {
             },
         });
 
-        // If location is provided and there is stock, create ProductLocation and Movement
-        if (data.locationId && data.currentStock > 0) {
+        // If location is provided, create ProductLocation and optionally Movement
+        if (data.locationId) {
             await tx.productLocation.create({
                 data: {
                     productId: p.id,
@@ -184,16 +184,19 @@ export async function createProduct(data: {
                 },
             });
 
-            await tx.movement.create({
-                data: {
-                    productId: p.id,
-                    type: "IN",
-                    toLocationId: data.locationId,
-                    quantity: data.currentStock,
-                    movedBy: session.user.id,
-                    notes: "Initial Stock",
-                },
-            });
+            // Only create movement if there is actual stock change
+            if (data.currentStock > 0) {
+                await tx.movement.create({
+                    data: {
+                        productId: p.id,
+                        type: "IN",
+                        toLocationId: data.locationId,
+                        quantity: data.currentStock,
+                        movedBy: session.user.id,
+                        notes: "Initial Stock",
+                    },
+                });
+            }
         }
 
         return p;
