@@ -428,19 +428,39 @@ export default function ProductDetailPage() {
                     )}
                 </div>
 
-                {/* QR Code Card */}
-                <div className="card-neu p-6 flex flex-col items-center justify-center text-center">
-                    <h2 className="text-lg font-semibold mb-4 w-full text-left">QR Code</h2>
-                    {product.qrCode ? (
-                        <div className="bg-white p-4 rounded-xl border border-gray-200">
-                            <img src={product.qrCode} alt="QR Code" className="w-40 h-40 object-contain" />
-                            <div className="mt-2 text-xs font-mono text-gray-500">{product.sku}</div>
-                        </div>
-                    ) : (
-                        <div className="text-[var(--text-muted)] text-sm py-10">
-                            No QR Code generated
-                        </div>
-                    )}
+                <div className="space-y-6">
+                    {/* Product Image Card */}
+                    <div className="card-neu p-6 flex flex-col items-center justify-center text-center">
+                        <h2 className="text-lg font-semibold mb-4 w-full text-left">Product Image</h2>
+                        {product.image ? (
+                            <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-gray-200">
+                                <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <div className="text-[var(--text-muted)] text-sm py-10 bg-[var(--bg-tertiary)] w-full rounded-xl flex items-center justify-center">
+                                <Package size={48} className="opacity-20" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* QR Code Card */}
+                    <div className="card-neu p-6 flex flex-col items-center justify-center text-center">
+                        <h2 className="text-lg font-semibold mb-4 w-full text-left">QR Code</h2>
+                        {product.qrCode ? (
+                            <div className="bg-white p-4 rounded-xl border border-gray-200">
+                                <img src={product.qrCode} alt="QR Code" className="w-40 h-40 object-contain" />
+                                <div className="mt-2 text-xs font-mono text-gray-500">{product.sku}</div>
+                            </div>
+                        ) : (
+                            <div className="text-[var(--text-muted)] text-sm py-10">
+                                No QR Code generated
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -516,217 +536,221 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Consume Modal */}
-            {showConsumeModal && product && (
-                <div className="modal-overlay" onClick={() => setShowConsumeModal(false)}>
-                    <div
-                        className="modal-content animate-slide-up p-6 max-w-md"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                                <Droplets size={20} className="text-purple-500" />
-                                Gunakan Produk
-                            </h2>
-                            <button onClick={() => setShowConsumeModal(false)} className="btn btn-ghost p-1">
-                                <Minus size={18} />
-                            </button>
-                        </div>
-                        <div className="mb-4 p-3 bg-[var(--bg-tertiary)] rounded-lg">
-                            <div className="text-sm font-medium text-[var(--text-primary)]">{product.name}</div>
-                            <div className="text-xs text-[var(--text-muted)] mt-1">
-                                Stock saat ini: <span className="font-bold">{product.currentStock} {product.unit}</span>
-                            </div>
-                        </div>
-                        <form onSubmit={handleConsume} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Dari Lokasi *
-                                </label>
-                                <select
-                                    value={consumeLocationId}
-                                    onChange={(e) => {
-                                        setConsumeLocationId(Number(e.target.value));
-                                        setConsumeQty(1); // Reset qty when location changes
-                                    }}
-                                    className="input w-full"
-                                    required
-                                >
-                                    <option value="" disabled>Pilih Lokasi</option>
-                                    {product.productLocations
-                                        .filter(pl => pl.quantity > 0)
-                                        .map(pl => (
-                                            <option key={pl.locationId} value={pl.locationId}>
-                                                {pl.location.name} ({pl.quantity} {product.unit})
-                                            </option>
-                                        ))
-                                    }
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Jumlah yang digunakan *
-                                </label>
-                                <input
-                                    type="number"
-                                    value={consumeQty}
-                                    onChange={(e) => setConsumeQty(Number(e.target.value))}
-                                    className="input w-full"
-                                    min={1}
-                                    max={
-                                        consumeLocationId
-                                            ? product.productLocations.find(pl => pl.locationId === consumeLocationId)?.quantity || 0
-                                            : 0
-                                    }
-                                    disabled={!consumeLocationId}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Catatan (opsional)
-                                </label>
-                                <textarea
-                                    value={consumeNotes}
-                                    onChange={(e) => setConsumeNotes(e.target.value)}
-                                    className="input w-full"
-                                    rows={2}
-                                    placeholder="Contoh: Dipakai untuk event..."
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setShowConsumeModal(false)} className="btn btn-secondary flex-1">
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={consuming || !consumeLocationId}
-                                    className="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700"
-                                >
-                                    {consuming ? "Memproses..." : "Gunakan"}
+            {
+                showConsumeModal && product && (
+                    <div className="modal-overlay" onClick={() => setShowConsumeModal(false)}>
+                        <div
+                            className="modal-content animate-slide-up p-6 max-w-md"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                                    <Droplets size={20} className="text-purple-500" />
+                                    Gunakan Produk
+                                </h2>
+                                <button onClick={() => setShowConsumeModal(false)} className="btn btn-ghost p-1">
+                                    <Minus size={18} />
                                 </button>
                             </div>
-                        </form>
+                            <div className="mb-4 p-3 bg-[var(--bg-tertiary)] rounded-lg">
+                                <div className="text-sm font-medium text-[var(--text-primary)]">{product.name}</div>
+                                <div className="text-xs text-[var(--text-muted)] mt-1">
+                                    Stock saat ini: <span className="font-bold">{product.currentStock} {product.unit}</span>
+                                </div>
+                            </div>
+                            <form onSubmit={handleConsume} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Dari Lokasi *
+                                    </label>
+                                    <select
+                                        value={consumeLocationId}
+                                        onChange={(e) => {
+                                            setConsumeLocationId(Number(e.target.value));
+                                            setConsumeQty(1); // Reset qty when location changes
+                                        }}
+                                        className="input w-full"
+                                        required
+                                    >
+                                        <option value="" disabled>Pilih Lokasi</option>
+                                        {product.productLocations
+                                            .filter(pl => pl.quantity > 0)
+                                            .map(pl => (
+                                                <option key={pl.locationId} value={pl.locationId}>
+                                                    {pl.location.name} ({pl.quantity} {product.unit})
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Jumlah yang digunakan *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={consumeQty}
+                                        onChange={(e) => setConsumeQty(Number(e.target.value))}
+                                        className="input w-full"
+                                        min={1}
+                                        max={
+                                            consumeLocationId
+                                                ? product.productLocations.find(pl => pl.locationId === consumeLocationId)?.quantity || 0
+                                                : 0
+                                        }
+                                        disabled={!consumeLocationId}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Catatan (opsional)
+                                    </label>
+                                    <textarea
+                                        value={consumeNotes}
+                                        onChange={(e) => setConsumeNotes(e.target.value)}
+                                        className="input w-full"
+                                        rows={2}
+                                        placeholder="Contoh: Dipakai untuk event..."
+                                    />
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                    <button type="button" onClick={() => setShowConsumeModal(false)} className="btn btn-secondary flex-1">
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={consuming || !consumeLocationId}
+                                        className="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700"
+                                    >
+                                        {consuming ? "Memproses..." : "Gunakan"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Transfer Modal */}
-            {showTransferModal && product && (
-                <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
-                    <div className="modal-content animate-slide-up p-6 max-w-md" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                                <ArrowRightLeft size={20} className="text-[var(--accent)]" />
-                                Transfer Stock
-                            </h2>
-                            <button onClick={() => setShowTransferModal(false)} className="btn btn-ghost p-1">
-                                <Minus size={18} />
-                            </button>
-                        </div>
-
-                        <div className="flex gap-2 mb-4 p-1 bg-[var(--bg-tertiary)] rounded-lg">
-                            <button
-                                type="button"
-                                onClick={() => { setTransferType("IN"); setFromLocId(""); setToLocId(""); }}
-                                className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${transferType === "IN" ? "bg-[var(--bg-secondary)] shadow-sm text-green-600" : "text-[var(--text-muted)]"}`}
-                            >
-                                Incoming (In)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setTransferType("OUT"); setFromLocId(""); setToLocId(""); }}
-                                className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${transferType === "OUT" ? "bg-[var(--bg-secondary)] shadow-sm text-red-600" : "text-[var(--text-muted)]"}`}
-                            >
-                                Outgoing (Out)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setTransferType("TRANSFER"); setFromLocId(""); setToLocId(""); }}
-                                className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${transferType === "TRANSFER" ? "bg-[var(--bg-secondary)] shadow-sm text-[var(--accent)]" : "text-[var(--text-muted)]"}`}
-                            >
-                                Transfer
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleTransfer} className="space-y-4">
-                            {/* Source Location */}
-                            {(transferType === "OUT" || transferType === "TRANSFER") && (
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                        From Location
-                                    </label>
-                                    <select
-                                        value={fromLocId}
-                                        onChange={(e) => setFromLocId(Number(e.target.value))}
-                                        className="input w-full"
-                                        required={transferType === "TRANSFER"}
-                                    >
-                                        <option value="">Select Location</option>
-                                        {locations.map(l => (
-                                            <option key={l.id} value={l.id}>{l.name} [{l.type}]</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            {/* Destination Location */}
-                            {(transferType === "IN" || transferType === "TRANSFER") && (
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                        To Location
-                                    </label>
-                                    <select
-                                        value={toLocId}
-                                        onChange={(e) => setToLocId(Number(e.target.value))}
-                                        className="input w-full"
-                                        required={transferType === "TRANSFER"}
-                                    >
-                                        <option value="">Select Location</option>
-                                        {locations.map(l => (
-                                            <option key={l.id} value={l.id}>{l.name} [{l.type}]</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Quantity *
-                                </label>
-                                <input
-                                    type="number"
-                                    value={transferQty}
-                                    onChange={(e) => setTransferQty(Number(e.target.value))}
-                                    className="input w-full"
-                                    min={1}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Notes
-                                </label>
-                                <input
-                                    type="text"
-                                    value={transferNotes}
-                                    onChange={(e) => setTransferNotes(e.target.value)}
-                                    className="input w-full"
-                                    placeholder="Optional notes"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setShowTransferModal(false)} className="btn btn-secondary flex-1">
-                                    Cancel
-                                </button>
-                                <button type="submit" disabled={transferring} className="btn btn-primary flex-1">
-                                    {transferring ? "Saving..." : "Record"}
+            {
+                showTransferModal && product && (
+                    <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
+                        <div className="modal-content animate-slide-up p-6 max-w-md" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                                    <ArrowRightLeft size={20} className="text-[var(--accent)]" />
+                                    Transfer Stock
+                                </h2>
+                                <button onClick={() => setShowTransferModal(false)} className="btn btn-ghost p-1">
+                                    <Minus size={18} />
                                 </button>
                             </div>
-                        </form>
+
+                            <div className="flex gap-2 mb-4 p-1 bg-[var(--bg-tertiary)] rounded-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => { setTransferType("IN"); setFromLocId(""); setToLocId(""); }}
+                                    className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${transferType === "IN" ? "bg-[var(--bg-secondary)] shadow-sm text-green-600" : "text-[var(--text-muted)]"}`}
+                                >
+                                    Incoming (In)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setTransferType("OUT"); setFromLocId(""); setToLocId(""); }}
+                                    className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${transferType === "OUT" ? "bg-[var(--bg-secondary)] shadow-sm text-red-600" : "text-[var(--text-muted)]"}`}
+                                >
+                                    Outgoing (Out)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setTransferType("TRANSFER"); setFromLocId(""); setToLocId(""); }}
+                                    className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${transferType === "TRANSFER" ? "bg-[var(--bg-secondary)] shadow-sm text-[var(--accent)]" : "text-[var(--text-muted)]"}`}
+                                >
+                                    Transfer
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleTransfer} className="space-y-4">
+                                {/* Source Location */}
+                                {(transferType === "OUT" || transferType === "TRANSFER") && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                            From Location
+                                        </label>
+                                        <select
+                                            value={fromLocId}
+                                            onChange={(e) => setFromLocId(Number(e.target.value))}
+                                            className="input w-full"
+                                            required={transferType === "TRANSFER"}
+                                        >
+                                            <option value="">Select Location</option>
+                                            {locations.map(l => (
+                                                <option key={l.id} value={l.id}>{l.name} [{l.type}]</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Destination Location */}
+                                {(transferType === "IN" || transferType === "TRANSFER") && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                            To Location
+                                        </label>
+                                        <select
+                                            value={toLocId}
+                                            onChange={(e) => setToLocId(Number(e.target.value))}
+                                            className="input w-full"
+                                            required={transferType === "TRANSFER"}
+                                        >
+                                            <option value="">Select Location</option>
+                                            {locations.map(l => (
+                                                <option key={l.id} value={l.id}>{l.name} [{l.type}]</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Quantity *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={transferQty}
+                                        onChange={(e) => setTransferQty(Number(e.target.value))}
+                                        className="input w-full"
+                                        min={1}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                                        Notes
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={transferNotes}
+                                        onChange={(e) => setTransferNotes(e.target.value)}
+                                        className="input w-full"
+                                        placeholder="Optional notes"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button type="button" onClick={() => setShowTransferModal(false)} className="btn btn-secondary flex-1">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" disabled={transferring} className="btn btn-primary flex-1">
+                                        {transferring ? "Saving..." : "Record"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
